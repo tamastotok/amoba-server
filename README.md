@@ -1,6 +1,6 @@
 ## Description
 
-Server for Tic-tac-toe multiplayer game using [socket.io](https://socket.io)\
+Server for Tic-tac-toe multiplayer game using [socket.io](https://socket.io)
 
 ## Usage:
 
