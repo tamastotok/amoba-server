@@ -7,7 +7,7 @@ const options = {
   },
 };
 const io = require('socket.io')(httpServer, options);
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 5000;
 
 const validRoomIds = [];
 
