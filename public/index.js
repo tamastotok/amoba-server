@@ -46,6 +46,7 @@ io.on('connection', (socket) => {
     console.log(`game created at ${roomId}`);
   });
 
+  // Join room
   socket.on('join-game', (data) => {
     const roomIdPool = validRoomIds.map((item) => item.roomId);
 
