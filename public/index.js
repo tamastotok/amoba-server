@@ -1,8 +1,13 @@
 const app = require('express')();
 const httpServer = require('http').createServer(app);
+/*
+  For develop, change the cors origin to your local client url,
+  example: 'http://localhost:3000'
+*/
+
 const options = {
   cors: {
-    origin: process.env.ORIGIN, //  change it to your local url, for example: 'http://localhost:3000'
+    origin: process.env.ORIGIN, // 'http://localhost:3000'
     methods: ['GET', 'POST'],
   },
 };
