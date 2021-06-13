@@ -2,7 +2,7 @@ const app = require('express')();
 const httpServer = require('http').createServer(app);
 const options = {
   cors: {
-    origin: ['https://amoba-5a136.web.app', 'http://localhost:3000'],
+    origin: process.env.ORIGIN, //  change it to your local url, for example: 'http://localhost:3000'
     methods: ['GET', 'POST'],
   },
 };
