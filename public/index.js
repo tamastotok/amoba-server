@@ -1,5 +1,8 @@
 const app = require('express')();
 const httpServer = require('http').createServer(app);
+const separateSockets = require('../bin/separateSockets');
+const matchingSockets = require('../bin/matchingSockets');
+
 /*
   For develop, change the cors origin to your local client url,
   example: 'http://localhost:3000'
@@ -7,87 +10,80 @@ const httpServer = require('http').createServer(app);
 
 const options = {
   cors: {
-    origin: process.env.ORIGIN, // 'http://localhost:3000'
+    //origin: process.env.ORIGIN, // 'http://localhost:3000'
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
   },
 };
 const io = require('socket.io')(httpServer, options);
 const PORT = process.env.PORT || 5000;
 
-const validRoomIds = [];
+//  Rooms for game modes
+let room8X,
+  room8O,
+  room10X,
+  room10O,
+  room12X,
+  room12O = [];
 
-io.on('connection', (socket) => {
-  io.emit('server-online', true);
-  console.log('user connected');
-  const count = io.engine.clientsCount;
+io.on('connection', async (socket) => {
+  io.emit('server-status', true);
 
-  socket.on('connect-to-server', () => {
-    console.log(count);
-    io.emit('user-connected', count);
+  const socketsCount = io.engine.clientsCount;
+  socket.on('join-lobby', () => {
+    io.emit('user-count', socketsCount);
+    socket.join('lobby');
+    //console.log('User has connected to lobby.');
   });
 
   //  Get squares position and value from client
   socket.on('square-btn-click', (data) => {
-    io.emit(`square-btn-click-${data.squares.link}`, data);
+    io.emit(`square-btn-click-${data.squares.roomId}`, data);
   });
 
-  //  Create room
-  socket.on('create-game', (data) => {
-    const roomId = Math.random().toString(36).substr(2, 9);
-    const hostGameData = {
-      roomId: roomId,
-      hostName: data.hostName,
-      hostMark: data.hostMark,
-      joinName: '',
-      joinMark: data.hostMark === 'X' ? 'O' : 'X',
-      starterMark: data.starterMark,
-      gridSize: data.gridSize,
+  //  Matchmaking
+  socket.on('search-game', async (data) => {
+    //  Give data object to the socket
+    socket.data = data;
+    socket.emit('searching', socket.data);
+
+    //  Put sockets into different rooms based on their settings
+    separateSockets(socket, data);
+
+    try {
+      const fetch8X = await io.in('8-X').fetchSockets();
+      const fetch8O = await io.in('8-O').fetchSockets();
+      const fetch10X = await io.in('10-X').fetchSockets();
+      const fetch10O = await io.in('10-O').fetchSockets();
+      const fetch12X = await io.in('12-X').fetchSockets();
+      const fetch12O = await io.in('12-O').fetchSockets();
+      //  Put sockets into array
+      room8X = fetch8X.map((item) => item);
+      room8O = fetch8O.map((item) => item);
+      room10X = fetch10X.map((item) => item);
+      room10O = fetch10O.map((item) => item);
+      room12X = fetch12X.map((item) => item);
+      room12O = fetch12O.map((item) => item);
+    } catch (error) {
+      console.log(error);
+    }
+
+    const sendDataToAllSockets = (players, roomId) => {
+      io.to(roomId).emit('game-found', { players, roomId });
     };
 
-    validRoomIds.push(hostGameData);
-
-    socket.emit('create-game-response', hostGameData);
-    socket.join(roomId);
-    console.log(`game created at ${roomId}`);
+    matchingSockets(room8X, sendDataToAllSockets);
+    matchingSockets(room8O, sendDataToAllSockets);
+    matchingSockets(room10X, sendDataToAllSockets);
+    matchingSockets(room10O, sendDataToAllSockets);
+    matchingSockets(room12X, sendDataToAllSockets);
+    matchingSockets(room12O, sendDataToAllSockets);
   });
 
-  // Join room
-  socket.on('join-game', (data) => {
-    const roomIdPool = validRoomIds.map((item) => item.roomId);
-
-    if (roomIdPool.includes(data.gameId)) {
-      const index = roomIdPool.indexOf(data.gameId);
-      validRoomIds[index].joinName = data.name;
-      socket.join(data.gameId);
-
-      socket.emit(
-        'join-game-settings',
-        (res = {
-          joinMark: validRoomIds[index].joinMark,
-          starterMark: validRoomIds[index].starterMark,
-        })
-      );
-
-      io.to(data.gameId).emit('game-found', validRoomIds[index]);
-      console.log('game found');
-      validRoomIds.splice(validRoomIds.indexOf(index), 1);
-    } else {
-      socket.emit('invalid-id', 'Invalid game id');
-      console.log('invalid code');
-    }
-  });
-
-  socket.on('leave-session', (id) => {
-    io.to(id).emit('leave-session');
+  socket.on('leave-game', (id) => {
+    io.to(id).emit('leave-game');
     socket.leave(id);
-
-    validRoomIds.map((item) => {
-      if (item.roomId === id) {
-        validRoomIds.splice(validRoomIds.indexOf(item), 1);
-      }
-    });
-
-    console.log('game disbanded');
+    //console.log('User left the game.');
   });
 });
 
