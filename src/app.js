@@ -1,22 +1,20 @@
 const app = require('express')();
 const httpServer = require('http').createServer(app);
-const separateSockets = require('../bin/separateSockets');
-const matchingSockets = require('../bin/matchingSockets');
+const separateSockets = require('./utils/separateSockets');
+const matchingSockets = require('./utils/matchingSockets');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-/*
-  For develop, change the cors origin to your local client url,
-  example: 'http://localhost:3000'
-*/
-
+const PORT = process.env.PORT || 5000;
+const URI = process.env.URI;
 const options = {
   cors: {
-    //origin: 'http://localhost:3000',
     origin: process.env.ORIGIN,
     methods: ['GET', 'POST'],
   },
 };
+
 const io = require('socket.io')(httpServer, options);
-const PORT = process.env.PORT || 5000;
 
 //  Rooms for game modes
 let room8X,
@@ -26,7 +24,10 @@ let room8X,
   room12X,
   room12O = [];
 
+mongoose.connect(URI, () => console.log('Connected to database!'));
 io.on('connection', async (socket) => {
+  //! https://www.youtube.com/watch?v=vjf774RKrLc 13:30
+
   io.emit('server-status', true);
 
   const socketsCount = io.engine.clientsCount;
