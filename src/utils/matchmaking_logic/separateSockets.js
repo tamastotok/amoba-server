@@ -24,4 +24,6 @@ module.exports = function (socket, data) {
   if (data.gridSize === 12 && data.starterMark === 'O') {
     socket.join('12-O');
   }
+
+  return;
 };
