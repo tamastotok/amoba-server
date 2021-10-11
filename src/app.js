@@ -25,8 +25,6 @@ mongoose.connect(URI, () => console.log('Connected to database!'));
 
 //  Socket functions
 io.on('connection', async (socket) => {
-  io.emit('server-status', true);
-
   // Send how many users are online to client
   const socketsCount = io.engine.clientsCount;
   socket.on('join-lobby', () => {
