@@ -6,7 +6,6 @@ require('dotenv').config();
 const separateSockets = require('./utils/matchmaking_logic/separateSockets');
 const matchingSockets = require('./utils/matchmaking_logic/matchingSockets');
 const playerData = require('./utils/playerData');
-const room = require('./utils/rooms');
 const Boards = require('./models/Boards');
 
 const PORT = process.env.PORT || 5000;
@@ -24,7 +23,7 @@ const io = require('socket.io')(httpServer, options);
 mongoose.connect(URI, () => console.log('Connected to database!'));
 
 //  Socket functions
-io.on('connection', async (socket) => {
+io.on('connection', (socket) => {
   // Send how many users are online to client
   const socketsCount = io.engine.clientsCount;
   socket.on('join-lobby', () => {
@@ -46,44 +45,36 @@ io.on('connection', async (socket) => {
     separateSockets(socket, data);
 
     try {
-      const fetch8X = await io.in('8-X').fetchSockets();
-      const fetch8O = await io.in('8-O').fetchSockets();
-      const fetch10X = await io.in('10-X').fetchSockets();
-      const fetch10O = await io.in('10-O').fetchSockets();
-      const fetch12X = await io.in('12-X').fetchSockets();
-      const fetch12O = await io.in('12-O').fetchSockets();
+      const room_8_X = [...(await io.in('8-X').fetchSockets())];
+      const room_8_O = [...(await io.in('8-O').fetchSockets())];
+      const room_10_X = [...(await io.in('10-X').fetchSockets())];
+      const room_10_O = [...(await io.in('10-O').fetchSockets())];
+      const room_12_X = [...(await io.in('12-X').fetchSockets())];
+      const room_12_O = [...(await io.in('12-O').fetchSockets())];
 
-      //  Put sockets into array
-      room.size8_starterX = fetch8X.map((item) => item);
-      room.size8_starterO = fetch8O.map((item) => item);
-      room.size10_starterX = fetch10X.map((item) => item);
-      room.size10_starterO = fetch10O.map((item) => item);
-      room.size12_starterX = fetch12X.map((item) => item);
-      room.size12_starterO = fetch12O.map((item) => item);
+      //  Send data to clients that matched
+      const sendDataToAllSockets = (players, roomId) => {
+        playerData.roomId = roomId;
+        playerData.blueName = players.blueName;
+        playerData.redName = players.redName;
+        playerData.positions = [];
+
+        io.to(roomId).emit('game-found', {
+          roomId,
+          playerData,
+        });
+        console.log('game found');
+      };
+
+      matchingSockets(room_8_X, sendDataToAllSockets);
+      matchingSockets(room_8_O, sendDataToAllSockets);
+      matchingSockets(room_10_X, sendDataToAllSockets);
+      matchingSockets(room_10_O, sendDataToAllSockets);
+      matchingSockets(room_12_X, sendDataToAllSockets);
+      matchingSockets(room_12_O, sendDataToAllSockets);
     } catch (error) {
       console.log(error);
     }
-
-    //  Send data to clients that matched
-    const sendDataToAllSockets = (players, roomId) => {
-      playerData.roomId = roomId;
-      playerData.blueName = players.blueName;
-      playerData.redName = players.redName;
-      playerData.positions = [];
-
-      io.to(roomId).emit('game-found', {
-        roomId,
-        playerData,
-      });
-      console.log('game found');
-    };
-
-    matchingSockets(room.size8_starterX, sendDataToAllSockets);
-    matchingSockets(room.size8_starterO, sendDataToAllSockets);
-    matchingSockets(room.size10_starterX, sendDataToAllSockets);
-    matchingSockets(room.size10_starterO, sendDataToAllSockets);
-    matchingSockets(room.size12_starterX, sendDataToAllSockets);
-    matchingSockets(room.size12_starterO, sendDataToAllSockets);
   });
 
   //  Get squares position and then update database

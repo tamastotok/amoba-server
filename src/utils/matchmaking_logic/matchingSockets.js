@@ -1,5 +1,4 @@
 const Boards = require('../../models/Boards');
-//const { gridSize, starterMark } = require('../playerData');
 
 const players = {
   blueName: '',
@@ -48,29 +47,28 @@ const switchRoom = (sockets, callback) => {
   });
 };
 
-//  Matchmaking
 module.exports = function (array, callback) {
-  for (let i = 0; i < array.length; ) {
-    // return if array has 1 item only
-    if (!array[i + 1]) return;
+  for (let i = 0; i < array.length; i++) {
+    for (let j = array.length - 1; j > 0; ) {
+      // return if the array has only 1 item
+      if (!array[i + 1]) return;
 
-    // array[0,1]===[X,O] => join private room
-    if (
-      array[i].data.playerMark === 'X' &&
-      array[i + 1].data.playerMark === 'O'
-    ) {
-      switchRoom([array[i], array[i + 1]], callback);
-      array.splice(i, 2);
-    } else if (
-      // array[0,1]===[O,X] => join private room
-      array[i].data.playerMark === 'O' &&
-      array[i + 1].data.playerMark === 'X'
-    ) {
-      switchRoom([array[i], array[i + 1]], callback);
-      array.splice(i, 2);
-    } else {
-      // array[0,1]===[O,O] or [X,X] => check the array again at +1 position (array[1,2])
-      i++;
+      if (array[i].data.playerMark !== array[j].data.playerMark) {
+        //  store index of the elements that match
+        const indexOfI = array.indexOf(array[i]);
+        const indexOfJ = array.indexOf(array[j]);
+
+        //  if match (X and O) or (O and X) => join private room
+        switchRoom([array[i], array[j]], callback);
+
+        //  remove matched elements from the array
+        array.splice(indexOfI, 1);
+        array.splice(indexOfJ - 1, 1);
+      } else {
+        j--;
+      }
     }
+
+    return;
   }
 };
