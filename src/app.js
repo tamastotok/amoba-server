@@ -27,7 +27,6 @@ mongoose.connect(URI, () => console.log('Connected to database!'));
 
 //  Socket functions
 io.on('connection', (socket) => {
-  io.emit('server-status', true);
   //  Connect to server
   socket.on('join-lobby', () => {
     join_lobby(socket, io);
