@@ -27,6 +27,7 @@ mongoose.connect(URI, () => console.log('Connected to database!'));
 
 //  Socket functions
 io.on('connection', (socket) => {
+  io.emit('server-status', true);
   //  Connect to server
   socket.on('join-lobby', () => {
     join_lobby(socket, io);
@@ -58,4 +59,4 @@ io.on('connection', (socket) => {
   });
 });
 
-httpServer.listen(PORT, () => console.log('Server is online!'));
+httpServer.listen(PORT, () => console.log(`Server is running at port ${PORT}`));
