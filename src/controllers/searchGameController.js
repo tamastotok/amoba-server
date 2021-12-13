@@ -31,7 +31,6 @@ module.exports = async function search_game(socket, io, data) {
         roomId,
         playerData,
       });
-      console.log('game found');
     };
 
     matchmaking(room_8_X, sendDataToAllSockets);
