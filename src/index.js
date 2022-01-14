@@ -27,10 +27,8 @@ mongoose.connect(URI, () => console.log('Connected to database!'));
 
 //  Socket functions
 io.on('connection', (socket) => {
-  //  Connect to server
-  socket.on('join-lobby', () => {
-    join_lobby(socket, io);
-  });
+  // Send how many sockets connecting back to the clients
+  join_lobby(socket, io);
 
   //  Matchmaking
   socket.on('search-game', (data) => {
