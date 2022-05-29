@@ -1,5 +1,20 @@
 const mongoose = require('mongoose');
 
+const ChatSchema = mongoose.Schema({
+  playerName: String,
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+  },
+  message: String,
+});
+
+const PositionsSchema = mongoose.Schema({
+  row: Number,
+  col: Number,
+  value: String,
+});
+
 const BoardSchema = mongoose.Schema({
   roomId: String,
   bluePlayer: {
@@ -16,8 +31,9 @@ const BoardSchema = mongoose.Schema({
       default: 'O',
     },
   },
+  chat: [ChatSchema],
   boardSize: Number,
-  positions: [Object],
+  positions: [PositionsSchema],
   whoIsNext: String,
   createdAt: {
     type: Date,

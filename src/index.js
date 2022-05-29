@@ -7,6 +7,7 @@ require('dotenv').config();
 const join_lobby = require('./controllers/joinLobbyController');
 const search_game = require('./controllers/searchGameController');
 const update_positions = require('./controllers/updatePositionsController');
+const update_messages = require('./controllers/updateMessagesController');
 const leave_game = require('./controllers/leaveGameController');
 const refresh_game = require('./controllers/refreshController');
 const disconnect = require('./controllers/disconnectController');
@@ -33,6 +34,11 @@ io.on('connection', (socket) => {
   //  Matchmaking
   socket.on('search-game', (data) => {
     search_game(socket, io, data);
+  });
+
+  //  Chat messages
+  socket.on('send-message', (data) => {
+    update_messages(io, data);
   });
 
   //  Update square positions in database
