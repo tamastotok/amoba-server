@@ -31,7 +31,7 @@ const BoardSchema = mongoose.Schema({
       default: 'O',
     },
   },
-  chat: [ChatSchema],
+  chatMessages: [ChatSchema],
   boardSize: Number,
   positions: [PositionsSchema],
   whoIsNext: String,
