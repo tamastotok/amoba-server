@@ -9,6 +9,7 @@ const search_game = require('./controllers/searchGameController');
 const update_positions = require('./controllers/updatePositionsController');
 const update_messages = require('./controllers/updateMessagesController');
 const leave_game = require('./controllers/leaveGameController');
+const restart_game = require('./controllers/restartGameController');
 const refresh_game = require('./controllers/refreshController');
 const disconnect = require('./controllers/disconnectController');
 
@@ -24,7 +25,10 @@ const options = {
 const io = require('socket.io')(httpServer, options);
 
 //  Connect database
-mongoose.connect(URI, () => console.log('Connected to database!'));
+mongoose
+  .connect(URI)
+  .then(() => console.log('Connected to database!'))
+  .catch((error) => console.log(error));
 
 //  Socket functions
 io.on('connection', (socket) => {
@@ -49,6 +53,11 @@ io.on('connection', (socket) => {
   //  When game ends
   socket.on('leave-game', (id) => {
     leave_game(socket, io, id);
+  });
+
+  //  When game restarted
+  socket.on('restart-game', (payload) => {
+    restart_game(socket, io, payload);
   });
 
   //  When client refreshed

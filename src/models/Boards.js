@@ -35,6 +35,10 @@ const BoardSchema = mongoose.Schema({
   boardSize: Number,
   positions: [PositionsSchema],
   whoIsNext: String,
+  lastStarter: {
+    type: String,
+    default: 'X',
+  },
   createdAt: {
     type: Date,
     default: Date.now(),

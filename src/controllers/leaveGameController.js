@@ -15,5 +15,11 @@ module.exports = async function leave_game(socket, io, id) {
   //  Leave sockets from room
   io.to(id).emit('leave-game');
   socket.leave(id);
+
+  socket.to(id).emit('opponent-left', {
+    message: 'Your opponent has left the game.',
+    roomId: id,
+  });
+
   console.log('User left the game.');
 };
