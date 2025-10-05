@@ -12,6 +12,8 @@ const leave_game = require('./controllers/leaveGameController');
 const restart_game = require('./controllers/restartGameController');
 const refresh_game = require('./controllers/refreshController');
 const disconnect = require('./controllers/disconnectController');
+const create_ai_game = require('./controllers/create_ai_game');
+const request_ai_move = require('./controllers/request_ai_move');
 
 const PORT = process.env.PORT || 5000;
 const URI = process.env.URI;
@@ -68,6 +70,14 @@ io.on('connection', (socket) => {
   //  Disconnect from server
   socket.on('disconnect', () => {
     disconnect(socket, io);
+  });
+
+  socket.on('create-ai-game', (data) => {
+    create_ai_game(socket, io, data);
+  });
+
+  socket.on('request-ai-move', (data) => {
+    request_ai_move(socket, io, data);
   });
 });
 

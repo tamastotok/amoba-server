@@ -1,4 +1,5 @@
 const Boards = require('../models/Boards');
+const { v4: uuidv4 } = require('uuid');
 
 const data = {
   roomId: '',
@@ -31,7 +32,7 @@ const makeNewBoard = async (data) => {
 };
 
 const joinPrivateRoom = (sockets, callback) => {
-  data.roomId = Math.random().toString(36).substr(2, 9);
+  data.roomId = uuidv4();
 
   sockets.map((item) => {
     const { playerMark, playerName, gridSize, starterMark } = item.data;
