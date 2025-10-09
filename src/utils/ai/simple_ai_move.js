@@ -11,8 +11,6 @@ function getRandomMove(board, size) {
   return empty[Math.floor(Math.random() * empty.length)];
 }
 
-module.exports = { getRandomMove };
-
 // WinLogic
 function hasFive(board, size, r, c, mark) {
   const dirs = [
@@ -90,4 +88,4 @@ function simpleAIMove(board, size, aiMark, playerMark) {
   return getRandomMove(board, size);
 }
 
-module.exports = { simpleAIMove };
+module.exports = { getRandomMove, simpleAIMove };

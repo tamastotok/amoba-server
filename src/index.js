@@ -79,6 +79,11 @@ io.on('connection', (socket) => {
   socket.on('request-ai-move', (data) => {
     request_ai_move(socket, io, data);
   });
+
+  socket.on('game-result', (data) => {
+    const { roomId, result } = data;
+    leave_game(socket, io, roomId, result);
+  });
 });
 
 httpServer.listen(PORT, () => console.log(`Server is running at port ${PORT}`));
