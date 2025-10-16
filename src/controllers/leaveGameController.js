@@ -55,6 +55,14 @@ module.exports = async function leave_game(socket, io, id, result = null) {
         await savePopulationToDB(population, currentGeneration);
 
         console.log(`Population evolved → Generation ${currentGeneration}`);
+
+        // Realtime broadcast to AI dashboard
+        io.emit('ai-generation-update', {
+          generation: currentGeneration,
+          population,
+          timestamp: new Date().toISOString(),
+        });
+
         gamesPlayed = 0; // reset local counter
       }
     }

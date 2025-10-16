@@ -1,15 +1,18 @@
-const select_sockets = require('../utils/selectSockets');
-const matchmaking = require('../utils/matchmaking');
 const playerData = require('../utils/playerData');
+const select_sockets = require('../utils/selectSockets');
+const { matchmaking, addToWaiting } = require('../utils/matchmaking');
 
 module.exports = async function search_game(socket, io, data) {
   playerData.gridSize = data.gridSize;
   playerData.starterMark = data.starterMark;
-  //  Give data object to the socket
+
   socket.data = data;
   socket.emit('searching', socket.data);
 
-  //  Put sockets into different rooms based on their settings
+  // Register to waiting list
+  addToWaiting(socket);
+
+  // Sorting sockets
   select_sockets(data.gridSize, data.starterMark, socket);
 
   try {
@@ -20,7 +23,6 @@ module.exports = async function search_game(socket, io, data) {
     const room_12_X = [...(await io.in('12-X').fetchSockets())];
     const room_12_O = [...(await io.in('12-O').fetchSockets())];
 
-    //  Send data to clients that matched
     const sendDataToAllSockets = (blueName, redName, roomId) => {
       playerData.roomId = roomId;
       playerData.blueName = blueName;

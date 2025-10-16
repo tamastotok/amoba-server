@@ -1,6 +1,9 @@
 const Boards = require('../models/Boards');
 const { v4: uuidv4 } = require('uuid');
 
+// Store actively searching sockets
+const waitingPlayers = new Map(); // socket.id -> socket
+
 const data = {
   roomId: '',
   blueName: '',
@@ -14,12 +17,8 @@ const makeNewBoard = async (data) => {
 
   const board = new Boards({
     roomId,
-    bluePlayer: {
-      name: blueName,
-    },
-    redPlayer: {
-      name: redName,
-    },
+    bluePlayer: { name: blueName },
+    redPlayer: { name: redName },
     boardSize,
     whoIsNext,
   });
@@ -34,42 +33,41 @@ const makeNewBoard = async (data) => {
 const joinPrivateRoom = (sockets, callback) => {
   data.roomId = uuidv4();
 
-  sockets.map((item) => {
+  sockets.forEach((item) => {
     const { playerMark, playerName, gridSize, starterMark } = item.data;
-    //  Store names based on player marks
+
     if (playerMark === 'X') data.blueName = playerName;
     if (playerMark === 'O') data.redName = playerName;
+
     data.boardSize = gridSize;
     data.whoIsNext = starterMark;
 
-    //  Leave sockets from every room then join matched sockets to private room
     item.leave('lobby');
     item.leave(`${data.boardSize}-${data.whoIsNext}`);
     item.join(data.roomId);
 
-    //  Function for send data with socket.io to client
     callback(data.blueName, data.redName, data.roomId);
   });
 
-  //  Create new board in database
   makeNewBoard(data);
 };
 
-module.exports = function matchmaking(room, callback) {
+// Matchmaking
+function matchmaking(room, callback) {
   for (let i = 0; i < room.length; i++) {
     for (let j = room.length - 1; j > 0; ) {
-      // return if the room has only 1 item
       if (!room[i + 1]) return;
 
       if (room[i].data.playerMark !== room[j].data.playerMark) {
-        //  store index of the sockets that match
         const indexOfI = room.indexOf(room[i]);
         const indexOfJ = room.indexOf(room[j]);
 
-        //  if match (X and O) or (O and X) => join private room
         joinPrivateRoom([room[i], room[j]], callback);
 
-        //  remove matched sockets from the room
+        // If match, delete from the waiting list
+        waitingPlayers.delete(room[i].id);
+        waitingPlayers.delete(room[j].id);
+
         room.splice(indexOfI, 1);
         room.splice(indexOfJ - 1, 1);
       } else {
@@ -77,4 +75,25 @@ module.exports = function matchmaking(room, callback) {
       }
     }
   }
+}
+
+// Player add/remove
+function addToWaiting(socket) {
+  waitingPlayers.set(socket.id, socket);
+}
+
+function removeFromWaiting(socket) {
+  if (waitingPlayers.has(socket.id)) {
+    waitingPlayers.delete(socket.id);
+    socket.leave('lobby');
+    console.log(`🟡 ${socket.data?.playerName || 'Player'} canceled search`);
+    socket.emit('search-canceled');
+  }
+}
+
+module.exports = {
+  matchmaking,
+  addToWaiting,
+  removeFromWaiting,
+  waitingPlayers,
 };

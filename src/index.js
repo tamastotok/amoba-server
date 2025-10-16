@@ -14,6 +14,9 @@ const refresh_game = require('./controllers/refreshController');
 const disconnect = require('./controllers/disconnectController');
 const create_ai_game = require('./controllers/create_ai_game');
 const request_ai_move = require('./controllers/request_ai_move');
+const cancel_search = require('./controllers/cancelSearchController');
+const aiRoutes = require('./routes/ai');
+const adminRoutes = require('./routes/admin');
 
 const PORT = process.env.PORT || 5000;
 const URI = process.env.URI;
@@ -40,6 +43,11 @@ io.on('connection', (socket) => {
   //  Matchmaking
   socket.on('search-game', (data) => {
     search_game(socket, io, data);
+  });
+
+  // Cancel matchmaking
+  socket.on('cancel-search', () => {
+    cancel_search(socket);
   });
 
   //  Chat messages
@@ -85,5 +93,9 @@ io.on('connection', (socket) => {
     leave_game(socket, io, roomId, result);
   });
 });
+
+// Endpoint for ai dashboard
+app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 
 httpServer.listen(PORT, () => console.log(`Server is running at port ${PORT}`));
