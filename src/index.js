@@ -1,39 +1,55 @@
-const express = require('express');
-const app = express();
-const httpServer = require('http').createServer(app);
-const mongoose = require('mongoose');
 require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const http = require('http');
+const { Server } = require('socket.io');
 
+const aiRoutes = require('./routes/ai');
+const adminRoutes = require('./routes/admin');
 const join_lobby = require('./controllers/joinLobbyController');
 const search_game = require('./controllers/searchGameController');
 const update_positions = require('./controllers/updatePositionsController');
 const update_messages = require('./controllers/updateMessagesController');
-const leave_game = require('./controllers/leaveGameController');
-const restart_game = require('./controllers/restartGameController');
-const refresh_game = require('./controllers/refreshController');
+const game_end = require('./controllers/gameEndController');
+const player_left = require('./controllers/playerLeftController');
+const reconnect_game = require('./controllers/reconnectController');
 const disconnect = require('./controllers/disconnectController');
 const create_ai_game = require('./controllers/create_ai_game');
 const request_ai_move = require('./controllers/request_ai_move');
 const cancel_search = require('./controllers/cancelSearchController');
-const aiRoutes = require('./routes/ai');
-const adminRoutes = require('./routes/admin');
 
 const PORT = process.env.PORT || 5000;
 const URI = process.env.URI;
-const options = {
+
+const app = express();
+app.use(express.json());
+app.use(
+  cors({
+    origin: process.env.ORIGIN || '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  })
+);
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
   cors: {
-    origin: process.env.ORIGIN,
+    origin: process.env.ORIGIN || '*',
     methods: ['GET', 'POST'],
   },
-};
-
-const io = require('socket.io')(httpServer, options);
+});
 
 //  Connect database
 mongoose
   .connect(URI)
   .then(() => console.log('Connected to database!'))
   .catch((error) => console.log(error));
+
+// API endpoints
+app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 
 //  Socket functions
 io.on('connection', (socket) => {
@@ -61,18 +77,13 @@ io.on('connection', (socket) => {
   });
 
   //  When game ends
-  socket.on('leave-game', (id) => {
-    leave_game(socket, io, id);
-  });
-
-  //  When game restarted
-  socket.on('restart-game', (payload) => {
-    restart_game(socket, io, payload);
+  socket.on('game-end', (data) => {
+    game_end(socket, io, data);
   });
 
   //  When client refreshed
   socket.on('reconnect', (id) => {
-    refresh_game(socket, io, id);
+    reconnect_game(socket, io, id);
   });
 
   //  Disconnect from server
@@ -80,22 +91,27 @@ io.on('connection', (socket) => {
     disconnect(socket, io);
   });
 
+  // Create AI vs Player game
   socket.on('create-ai-game', (data) => {
     create_ai_game(socket, io, data);
   });
 
+  // AI move event
   socket.on('request-ai-move', (data) => {
     request_ai_move(socket, io, data);
   });
 
-  socket.on('game-result', (data) => {
+  /*socket.on('game-result', (data) => {
     const { roomId, result } = data;
     leave_game(socket, io, roomId, result);
+  });*/
+
+  // When player left the game
+  socket.on('player-left', (data) => {
+    player_left(socket, io, data);
   });
 });
 
-// Endpoint for ai dashboard
-app.use('/api/ai', aiRoutes);
-app.use('/api/admin', adminRoutes);
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-httpServer.listen(PORT, () => console.log(`Server is running at port ${PORT}`));
+module.exports = { app, io };

@@ -17,15 +17,9 @@ const StrategySchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('AI_Strategy', StrategySchema);
+const StrategyModel = mongoose.model('AI_Strategy', StrategySchema);
 
-const PopulationSchema = new mongoose.Schema({
-  generation: Number,
-  population: [StrategySchema],
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-module.exports = mongoose.model('Population', PopulationSchema);
+module.exports = {
+  StrategySchema,
+  StrategyModel,
+};

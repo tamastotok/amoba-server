@@ -85,10 +85,15 @@ function addToWaiting(socket) {
 function removeFromWaiting(socket) {
   if (waitingPlayers.has(socket.id)) {
     waitingPlayers.delete(socket.id);
-    socket.leave('lobby');
-    console.log(`🟡 ${socket.data?.playerName || 'Player'} canceled search`);
-    socket.emit('search-canceled');
   }
+
+  // leave all matchmaking rooms
+  const roomsToLeave = ['8-X', '8-O', '10-X', '10-O', '12-X', '12-O', 'lobby'];
+
+  roomsToLeave.forEach((room) => socket.leave(room));
+
+  console.log(`🟡 ${socket.data?.playerName || 'Player'} canceled search`);
+  socket.emit('search-canceled');
 }
 
 module.exports = {

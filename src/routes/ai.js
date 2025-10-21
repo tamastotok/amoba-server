@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Population = require('../models/AI_Strategy');
+const Population = require('../models/ai/Population');
 
 // GET /api/ai/progress
 router.get('/progress', async (req, res) => {

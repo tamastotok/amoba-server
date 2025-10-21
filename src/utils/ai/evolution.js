@@ -1,5 +1,6 @@
-const AI_Strategy = require('../../models/AI_Strategy');
-const { Strategy, createInitialPopulation } = require('./genetic_ai_move');
+const { StrategyModel } = require('../../models/ai/Strategy');
+const { Strategy, createInitialPopulation } = require('../ai/genetic_ai_move');
+const { io } = require('../../index'); // 🔥 Socket.IO importálása (útvonalat igazítsd a projekted szerkezetéhez)
 
 // Fitness rating
 function updateFitness(population, result, strategyId) {
@@ -60,17 +61,28 @@ function evolvePopulation(population, generationSize = 10) {
   return newPopulation;
 }
 
-// Save in db
+// Save in db + notify dashboard
 async function savePopulationToDB(population, generation) {
-  await AI_Strategy.create({ generation, population });
+  await StrategyModel.create({ generation, population });
   console.log(
     `Generation ${generation} saved to DB (${population.length} strategies)`
   );
+
+  // 🔥 Notify connected clients (AI Dashboard)
+  try {
+    io.emit('ai-generation-update', {
+      generation,
+      population,
+    });
+    console.log(`📡 Emitted ai-generation-update for generation ${generation}`);
+  } catch (err) {
+    console.error('⚠️ Failed to emit AI update:', err);
+  }
 }
 
 // Load from db
 async function loadLatestPopulation() {
-  const latest = await AI_Strategy.findOne().sort({ generation: -1 }).lean();
+  const latest = await StrategyModel.findOne().sort({ generation: -1 }).lean();
   if (!latest) {
     console.log('No existing population found. Creating initial...');
     const population = createInitialPopulation(10);
