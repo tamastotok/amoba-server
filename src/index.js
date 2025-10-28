@@ -101,11 +101,6 @@ io.on('connection', (socket) => {
     request_ai_move(socket, io, data);
   });
 
-  /*socket.on('game-result', (data) => {
-    const { roomId, result } = data;
-    leave_game(socket, io, roomId, result);
-  });*/
-
   // When player left the game
   socket.on('player-left', (data) => {
     player_left(socket, io, data);

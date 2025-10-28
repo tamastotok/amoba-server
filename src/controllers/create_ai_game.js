@@ -47,7 +47,12 @@ module.exports = async function create_ai_game(socket, io, data) {
     // Send data to client
     io.to(socket.id).emit('ai-game-created', {
       roomId,
-      playerData,
+      boardSize: size,
+      starterMark,
+      playerData: {
+        blueName,
+        redName,
+      },
     });
 
     console.log(

@@ -46,17 +46,18 @@ module.exports = async function game_end(socket, io, data) {
       }
     }
 
-    // Normal close
-    endedRooms.add(roomId);
-    // Send back to both players
-    io.to(roomId).emit('game-ended', { winner: winner });
+    // Notify the client
+    socket.emit('game-ended', { winner });
 
-    // Delete Board
+    // Delete room
+    endedRooms.add(roomId);
+
+    // DB cleanup
     await Boards.deleteOne({ roomId });
     console.log(`🏁 Game ended in room ${roomId}, winner: ${winner}`);
 
-    // Both players leave the room
-    io.in(roomId).socketsLeave(roomId);
+    // Player leave the room
+    socket.leave(roomId);
 
     // Delete flag
     setTimeout(() => endedRooms.delete(roomId), 5000);

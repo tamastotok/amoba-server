@@ -1,47 +1,26 @@
-const playerData = require('../utils/playerData');
-const select_sockets = require('../utils/selectSockets');
-const { matchmaking, addToWaiting } = require('../utils/matchmaking');
+const { addToWaiting } = require('../utils/matchmaking');
 
-module.exports = async function search_game(socket, io, data) {
-  playerData.gridSize = data.gridSize;
-  playerData.starterMark = data.starterMark;
-
-  socket.data = data;
-  socket.emit('searching', socket.data);
-
-  // Register to waiting list
-  addToWaiting(socket);
-
-  // Sorting sockets
-  select_sockets(data.gridSize, data.starterMark, socket);
-
+module.exports = function search_game(socket, io, data) {
   try {
-    const room_8_X = [...(await io.in('8-X').fetchSockets())];
-    const room_8_O = [...(await io.in('8-O').fetchSockets())];
-    const room_10_X = [...(await io.in('10-X').fetchSockets())];
-    const room_10_O = [...(await io.in('10-O').fetchSockets())];
-    const room_12_X = [...(await io.in('12-X').fetchSockets())];
-    const room_12_O = [...(await io.in('12-O').fetchSockets())];
-
-    const sendDataToAllSockets = (blueName, redName, roomId) => {
-      playerData.roomId = roomId;
-      playerData.blueName = blueName;
-      playerData.redName = redName;
-      playerData.positions = [];
-
-      io.to(roomId).emit('game-found', {
-        roomId,
-        playerData,
-      });
+    // Save data for sockets
+    socket.data = {
+      playerName: data.playerName || 'Player',
+      playerMark: data.playerMark, // 'X' vagy 'O'
+      gridSize: data.gridSize, // 8 / 10 / 12
+      starterMark: data.starterMark, // 'X' vagy 'O'
     };
 
-    matchmaking(room_8_X, sendDataToAllSockets);
-    matchmaking(room_8_O, sendDataToAllSockets);
-    matchmaking(room_10_X, sendDataToAllSockets);
-    matchmaking(room_10_O, sendDataToAllSockets);
-    matchmaking(room_12_X, sendDataToAllSockets);
-    matchmaking(room_12_O, sendDataToAllSockets);
-  } catch (error) {
-    console.log(error);
+    // Notify the client
+    socket.emit('searching', socket.data);
+
+    // Start matchmaking
+    addToWaiting(socket);
+
+    console.log(
+      `🔍 ${socket.data.playerName} searching for ${socket.data.gridSize}x${socket.data.gridSize} (${socket.data.playerMark}, starts: ${socket.data.starterMark})`
+    );
+  } catch (err) {
+    console.error('❌ Error in search_game controller:', err);
+    socket.emit('search-error', { message: 'Internal server error' });
   }
 };

@@ -1,20 +1,17 @@
 const Boards = require('../models/Boards');
 const { v4: uuidv4 } = require('uuid');
 
-// Store actively searching sockets
-const waitingPlayers = new Map(); // socket.id -> socket
+// ──────────────── Waiting players ────────────────
+const waitingPlayers = []; // every searching socket goes here (array, not Map)
 
-const data = {
-  roomId: '',
-  blueName: '',
-  redName: '',
-  boardSize: null,
-  whoIsNext: '',
-};
-
-const makeNewBoard = async (data) => {
-  const { roomId, blueName, redName, boardSize, whoIsNext } = data;
-
+// ──────────────── Helper: Board creation ────────────────
+async function makeNewBoard({
+  roomId,
+  blueName,
+  redName,
+  boardSize,
+  whoIsNext,
+}) {
   const board = new Boards({
     roomId,
     bluePlayer: { name: blueName },
@@ -26,78 +23,112 @@ const makeNewBoard = async (data) => {
   try {
     await board.save();
   } catch (error) {
-    throw new Error(error);
+    console.error('❌ Failed to create new board:', error);
   }
-};
+}
 
-const joinPrivateRoom = (sockets, callback) => {
-  data.roomId = uuidv4();
+// ──────────────── Player add/remove ────────────────
+function addToWaiting(socket) {
+  // Prevent socket for duplicate searching
+  if (waitingPlayers.find((s) => s.id === socket.id)) return;
 
-  sockets.forEach((item) => {
-    const { playerMark, playerName, gridSize, starterMark } = item.data;
+  waitingPlayers.push(socket);
 
-    if (playerMark === 'X') data.blueName = playerName;
-    if (playerMark === 'O') data.redName = playerName;
+  setTimeout(() => {
+    tryMatch();
+  }, 100);
+}
 
-    data.boardSize = gridSize;
-    data.whoIsNext = starterMark;
+function removeFromWaiting(socket) {
+  const idx = waitingPlayers.findIndex((p) => p.id === socket.id);
+  if (idx !== -1) waitingPlayers.splice(idx, 1);
 
-    item.leave('lobby');
-    item.leave(`${data.boardSize}-${data.whoIsNext}`);
-    item.join(data.roomId);
+  socket.emit('search-canceled');
+  console.log(`🟡 ${socket.data?.playerName || 'Player'} canceled search`);
+}
 
-    callback(data.blueName, data.redName, data.roomId);
-  });
+// ──────────────── Matchmaking ────────────────
+function tryMatch() {
+  if (waitingPlayers.length < 2) return;
 
-  makeNewBoard(data);
-};
+  for (let i = 0; i < waitingPlayers.length; i++) {
+    for (let j = i + 1; j < waitingPlayers.length; j++) {
+      const p1 = waitingPlayers[i];
+      const p2 = waitingPlayers[j];
 
-// Matchmaking
-function matchmaking(room, callback) {
-  for (let i = 0; i < room.length; i++) {
-    for (let j = room.length - 1; j > 0; ) {
-      if (!room[i + 1]) return;
+      // Waiting for both socket to get data from client
+      if (!p1?.data || !p2?.data) continue;
 
-      if (room[i].data.playerMark !== room[j].data.playerMark) {
-        const indexOfI = room.indexOf(room[i]);
-        const indexOfJ = room.indexOf(room[j]);
+      const sameBoard = p1.data.gridSize === p2.data.gridSize;
+      const oppositeMarks = p1.data.playerMark !== p2.data.playerMark;
+      const sameStarter = p1.data.starterMark === p2.data.starterMark;
 
-        joinPrivateRoom([room[i], room[j]], callback);
+      console.log(
+        '🧩 Checking:',
+        `${p1.data.playerName} (${p1.data.playerMark}, starts ${p1.data.starterMark}) vs ${p2.data.playerName} (${p2.data.playerMark}, starts ${p2.data.starterMark})`
+      );
 
-        // If match, delete from the waiting list
-        waitingPlayers.delete(room[i].id);
-        waitingPlayers.delete(room[j].id);
-
-        room.splice(indexOfI, 1);
-        room.splice(indexOfJ - 1, 1);
-      } else {
-        j--;
+      if (sameBoard && oppositeMarks && sameStarter) {
+        console.log(
+          '✅ Match created between',
+          p1.data.playerName,
+          'and',
+          p2.data.playerName
+        );
+        createRoom(p1, p2);
+        waitingPlayers.splice(j, 1);
+        waitingPlayers.splice(i, 1);
+        return;
       }
     }
   }
 }
 
-// Player add/remove
-function addToWaiting(socket) {
-  waitingPlayers.set(socket.id, socket);
-}
+// ──────────────── Room creation and notify clients ────────────────
+function createRoom(playerA, playerB) {
+  const roomId = uuidv4();
+  const { gridSize } = playerA.data;
 
-function removeFromWaiting(socket) {
-  if (waitingPlayers.has(socket.id)) {
-    waitingPlayers.delete(socket.id);
+  let blueName, redName, whoIsNext;
+
+  // Player mark mapping (X -> blue, O -> red)
+  if (playerA.data.playerMark === 'X') {
+    blueName = playerA.data.playerName;
+    redName = playerB.data.playerName;
+  } else {
+    blueName = playerB.data.playerName;
+    redName = playerA.data.playerName;
   }
 
-  // leave all matchmaking rooms
-  const roomsToLeave = ['8-X', '8-O', '10-X', '10-O', '12-X', '12-O', 'lobby'];
+  // Determine who starts based on agreed starterMark
+  whoIsNext = playerA.data.starterMark; // can be 'X' or 'O'
 
-  roomsToLeave.forEach((room) => socket.leave(room));
+  // Join both players to the room
+  playerA.join(roomId);
+  playerB.join(roomId);
 
-  console.log(`🟡 ${socket.data?.playerName || 'Player'} canceled search`);
-  socket.emit('search-canceled');
+  // Save to DB
+  makeNewBoard({ roomId, blueName, redName, boardSize: gridSize, whoIsNext });
+
+  // Build payload to send back to clients
+  const payload = {
+    roomId,
+    boardSize: gridSize,
+    starterMark: whoIsNext,
+    playerData: { blueName, redName },
+  };
+
+  // Notify both players
+  playerA.emit('game-found', payload);
+  playerB.emit('game-found', payload);
+
+  console.log(
+    `✅ Match created: ${blueName} (X) vs ${redName} (O) | ${gridSize}x${gridSize} | starts: ${whoIsNext}`
+  );
 }
 
+// ──────────────── Exports ────────────────
 module.exports = {
-  matchmaking,
   addToWaiting,
   removeFromWaiting,
   waitingPlayers,
