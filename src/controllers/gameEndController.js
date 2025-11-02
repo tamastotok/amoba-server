@@ -47,7 +47,7 @@ module.exports = async function game_end(socket, io, data) {
     }
 
     // Notify the client
-    socket.emit('game-ended', { winner });
+    socket.emit('game-ended');
 
     // Delete room
     endedRooms.add(roomId);
