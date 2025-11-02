@@ -1,5 +1,5 @@
 const { removeFromWaiting } = require('../utils/matchmaking');
 
-module.exports = async function cancel_search(socket) {
+module.exports = async function cancelSearch(socket) {
   removeFromWaiting(socket);
 };

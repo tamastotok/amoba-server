@@ -13,11 +13,11 @@ let population = [];
 let currentGeneration = 1;
 let gamesPlayed = 0;
 
-module.exports = async function request_ai_move(socket, io, data) {
+module.exports = async function requestAIMove(socket, io, data) {
   try {
     const { roomId, playerMark } = data;
     if (!roomId) {
-      console.warn('❗ request_ai_move called without roomId');
+      console.warn('requestAIMove called without roomId');
       return;
     }
 

@@ -1,3 +1,3 @@
-// somewhere globally (e.g. roomState.js)
 const endedRooms = new Set();
-module.exports = { endedRooms };
+const PENDING_ROOMS = new Map(); // roomId → timeoutId
+module.exports = { endedRooms, PENDING_ROOMS };

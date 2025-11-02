@@ -1,6 +1,9 @@
+const { DIRECTIONS_8 } = require('../directions');
+
 class Strategy {
   constructor(id, weights = null) {
     this.id = id;
+
     // Add weights to ai behavior
     this.weights = weights || {
       attack: Math.random(), // attack
@@ -41,18 +44,8 @@ function evaluateMove(board, row, col, strategy) {
   const distFromCenter = Math.abs(row - center) + Math.abs(col - center);
   score += strategy.weights.center * (1 / (distFromCenter + 1));
 
-  // Defence: if the enemy is next to the ai
-  const dirs = [
-    [1, 0],
-    [-1, 0],
-    [0, 1],
-    [0, -1],
-    [1, 1],
-    [1, -1],
-    [-1, 1],
-    [-1, -1],
-  ];
-  for (const [dx, dy] of dirs) {
+  // Defense: if the enemy is next to the ai
+  for (const [dx, dy] of DIRECTIONS_8) {
     const nr = row + dx,
       nc = col + dy;
     if (board[nr] && board[nr][nc] && board[nr][nc] !== '') {

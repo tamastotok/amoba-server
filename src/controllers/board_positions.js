@@ -1,6 +1,6 @@
 const Boards = require('../models/Boards');
 
-module.exports = async function update_positions(io, data) {
+module.exports = async function boardPositions(io, data) {
   const query = { roomId: data.roomId };
   const position = {
     row: data.row,

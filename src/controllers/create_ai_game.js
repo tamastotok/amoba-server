@@ -1,9 +1,8 @@
 const Boards = require('../models/Boards');
 const { v4: uuidv4 } = require('uuid');
-const playerData = require('../utils/playerData');
-const request_ai_move = require('./request_ai_move');
+const requestAIMove = require('./request_ai_move');
 
-module.exports = async function create_ai_game(socket, io, data) {
+module.exports = async function createAIGame(socket, io, data) {
   try {
     const roomId = uuidv4();
 
@@ -32,18 +31,6 @@ module.exports = async function create_ai_game(socket, io, data) {
     // Join room
     socket.join(roomId);
 
-    // Server side session data
-    playerData.roomId = roomId;
-    playerData.positions = [];
-    playerData.boardSize = size;
-    playerData.playerName = playerName;
-    playerData.playerMark = playerMark;
-    playerData.aiMark = aiMark;
-    playerData.starterMark = starterMark;
-    playerData.difficulty = difficulty;
-    playerData.blueName = blueName;
-    playerData.redName = redName;
-
     // Send data to client
     io.to(socket.id).emit('ai-game-created', {
       roomId,
@@ -61,7 +48,7 @@ module.exports = async function create_ai_game(socket, io, data) {
 
     // If AI starts, AI move sends to client immediately
     if (starterMark === aiMark) {
-      await request_ai_move(socket, io, { roomId, playerMark });
+      await requestAIMove(socket, io, { roomId, playerMark });
       // playerMark = controller calculate AI's mark from this
     }
   } catch (error) {

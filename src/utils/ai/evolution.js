@@ -1,6 +1,6 @@
 const { StrategyModel } = require('../../models/ai/Strategy');
 const { Strategy, createInitialPopulation } = require('../ai/genetic_ai_move');
-const { io } = require('../../index'); // 🔥 Socket.IO importálása (útvonalat igazítsd a projekted szerkezetéhez)
+const { io } = require('../../index');
 
 // Fitness rating
 function updateFitness(population, result, strategyId) {
@@ -68,15 +68,15 @@ async function savePopulationToDB(population, generation) {
     `Generation ${generation} saved to DB (${population.length} strategies)`
   );
 
-  // 🔥 Notify connected clients (AI Dashboard)
+  // Notify connected clients (AI Dashboard)
   try {
     io.emit('ai-generation-update', {
       generation,
       population,
     });
-    console.log(`📡 Emitted ai-generation-update for generation ${generation}`);
+    console.log(`Emitted ai-generation-update for generation ${generation}`);
   } catch (err) {
-    console.error('⚠️ Failed to emit AI update:', err);
+    console.error('Failed to emit AI update:', err);
   }
 }
 

@@ -1,3 +1,5 @@
+const { DIRECTIONS_4 } = require('../directions');
+
 function getRandomMove(board, size) {
   const empty = [];
   for (let r = 0; r < size; r++) {
@@ -13,16 +15,10 @@ function getRandomMove(board, size) {
 
 // WinLogic
 function hasFive(board, size, r, c, mark) {
-  const dirs = [
-    [1, 0], // függőleges
-    [0, 1], // vízszintes
-    [1, 1], // átló \
-    [1, -1], // átló /
-  ];
-  for (const [dr, dc] of dirs) {
+  for (const [dr, dc] of DIRECTIONS_4) {
     let count = 1;
 
-    // előre
+    // Forward
     let rr = r + dr,
       cc = c + dc;
     while (
@@ -37,7 +33,7 @@ function hasFive(board, size, r, c, mark) {
       cc += dc;
     }
 
-    // vissza
+    // Backward
     rr = r - dr;
     cc = c - dc;
     while (

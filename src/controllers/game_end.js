@@ -11,12 +11,12 @@ let population = [];
 let currentGeneration = 1;
 let gamesPlayed = 0;
 
-module.exports = async function game_end(socket, io, data) {
+module.exports = async function gameEnd(socket, io, data) {
   try {
     const { roomId, winner } = data;
 
     if (!roomId) {
-      console.warn('⚠️ No roomId found in game_end');
+      console.warn('No roomId found in gameEnd');
       return;
     }
 
@@ -54,7 +54,7 @@ module.exports = async function game_end(socket, io, data) {
 
     // DB cleanup
     await Boards.deleteOne({ roomId });
-    console.log(`🏁 Game ended in room ${roomId}, winner: ${winner}`);
+    console.log(`Game ended in room ${roomId}, winner: ${winner}`);
 
     // Player leave the room
     socket.leave(roomId);

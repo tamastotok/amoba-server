@@ -23,7 +23,7 @@ async function makeNewBoard({
   try {
     await board.save();
   } catch (error) {
-    console.error('❌ Failed to create new board:', error);
+    console.error('Failed to create new board:', error);
   }
 }
 
@@ -44,7 +44,7 @@ function removeFromWaiting(socket) {
   if (idx !== -1) waitingPlayers.splice(idx, 1);
 
   socket.emit('search-canceled');
-  console.log(`🟡 ${socket.data?.playerName || 'Player'} canceled search`);
+  console.log(`${socket.data?.playerName || 'Player'} canceled search`);
 }
 
 // ──────────────── Matchmaking ────────────────
@@ -64,13 +64,13 @@ function tryMatch() {
       const sameStarter = p1.data.starterMark === p2.data.starterMark;
 
       console.log(
-        '🧩 Checking:',
+        'Checking:',
         `${p1.data.playerName} (${p1.data.playerMark}, starts ${p1.data.starterMark}) vs ${p2.data.playerName} (${p2.data.playerMark}, starts ${p2.data.starterMark})`
       );
 
       if (sameBoard && oppositeMarks && sameStarter) {
         console.log(
-          '✅ Match created between',
+          'Match created between',
           p1.data.playerName,
           'and',
           p2.data.playerName
@@ -123,7 +123,7 @@ function createRoom(playerA, playerB) {
   playerB.emit('game-found', payload);
 
   console.log(
-    `✅ Match created: ${blueName} (X) vs ${redName} (O) | ${gridSize}x${gridSize} | starts: ${whoIsNext}`
+    `Match created: ${blueName} (X) vs ${redName} (O) | ${gridSize}x${gridSize} | starts: ${whoIsNext}`
   );
 }
 

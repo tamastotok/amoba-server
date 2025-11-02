@@ -7,17 +7,16 @@ const { Server } = require('socket.io');
 
 const aiRoutes = require('./routes/ai');
 const adminRoutes = require('./routes/admin');
-const join_lobby = require('./controllers/joinLobbyController');
-const search_game = require('./controllers/searchGameController');
-const update_positions = require('./controllers/updatePositionsController');
-const update_messages = require('./controllers/updateMessagesController');
-const game_end = require('./controllers/gameEndController');
-const player_left = require('./controllers/playerLeftController');
-const reconnect_game = require('./controllers/reconnectController');
-const disconnect = require('./controllers/disconnectController');
-const create_ai_game = require('./controllers/create_ai_game');
-const request_ai_move = require('./controllers/request_ai_move');
-const cancel_search = require('./controllers/cancelSearchController');
+const searchGame = require('./controllers/search_game');
+const boardPositions = require('./controllers/board_positions');
+const chatMessages = require('./controllers/chat_messages');
+const gameEnd = require('./controllers/game_end');
+const midgameLeft = require('./controllers/midgame_left');
+const reconnectRoom = require('./controllers/reconnect_room');
+const createAIGame = require('./controllers/create_ai_game');
+const requestAIMove = require('./controllers/request_ai_move');
+const cancelSearch = require('./controllers/cancel_search');
+const disconnect = require('./controllers/disconnect');
 
 const PORT = process.env.PORT || 5000;
 const URI = process.env.URI;
@@ -53,57 +52,54 @@ app.use('/api/admin', adminRoutes);
 
 //  Socket functions
 io.on('connection', (socket) => {
-  // Send how many sockets connecting back to the clients
-  join_lobby(socket, io);
-
   //  Matchmaking
   socket.on('search-game', (data) => {
-    search_game(socket, io, data);
+    searchGame(socket, io, data);
   });
 
   // Cancel matchmaking
   socket.on('cancel-search', () => {
-    cancel_search(socket);
+    cancelSearch(socket);
   });
 
   //  Chat messages
   socket.on('send-message', (data) => {
-    update_messages(io, data);
+    chatMessages(io, data);
   });
 
   //  Update square positions in database
   socket.on('square-btn-click', (data) => {
-    update_positions(io, data.squares);
+    boardPositions(io, data.squares);
   });
 
   //  When game ends
   socket.on('game-end', (data) => {
-    game_end(socket, io, data);
-  });
-
-  //  When client refreshed
-  socket.on('reconnect', (id) => {
-    reconnect_game(socket, io, id);
-  });
-
-  //  Disconnect from server
-  socket.on('disconnect', () => {
-    disconnect(socket, io);
+    gameEnd(socket, io, data);
   });
 
   // Create AI vs Player game
   socket.on('create-ai-game', (data) => {
-    create_ai_game(socket, io, data);
+    createAIGame(socket, io, data);
   });
 
   // AI move event
   socket.on('request-ai-move', (data) => {
-    request_ai_move(socket, io, data);
+    requestAIMove(socket, io, data);
   });
 
-  // When player left the game
-  socket.on('player-left', (data) => {
-    player_left(socket, io, data);
+  // When player left the game/disconnected mid game
+  socket.on('midgame-left', (data) => {
+    midgameLeft(socket, io, data);
+  });
+
+  //  When client reconnects
+  socket.on('reconnect-room', (roomId) => {
+    reconnectRoom(socket, io, roomId);
+  });
+
+  // When a socket disconnects
+  socket.on('disconnect', () => {
+    disconnect(socket, io);
   });
 });
 
