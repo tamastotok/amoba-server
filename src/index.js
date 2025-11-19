@@ -5,19 +5,33 @@ const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
 
+// --- Routes ---
 const aiRoutes = require('./routes/ai');
 const adminRoutes = require('./routes/admin');
+
+// --- Core controllers ---
 const searchGame = require('./controllers/search_game');
 const boardPositions = require('./controllers/board_positions');
 const chatMessages = require('./controllers/chat_messages');
 const gameEnd = require('./controllers/game_end');
-const midgameLeft = require('./controllers/midgame_left');
-const reconnectRoom = require('./controllers/reconnect_room');
 const createAIGame = require('./controllers/create_ai_game');
 const requestAIMove = require('./controllers/request_ai_move');
 const cancelSearch = require('./controllers/cancel_search');
 const disconnect = require('./controllers/disconnect');
 
+// --- VS Human controllers ---
+const leaveGameHuman = require('./controllers/vs-human/leave_game_human');
+const midgameLeftHuman = require('./controllers/vs-human/midgame_left_human');
+const reconnectHuman = require('./controllers/vs-human/reconnect_human');
+const reloadHuman = require('./controllers/vs-human/reload_human');
+
+// --- VS AI controllers ---
+const leaveGameAI = require('./controllers/vs-ai/leave_game_ai');
+const midgameLeftAI = require('./controllers/vs-ai/midgame_left_ai');
+const reconnectAI = require('./controllers/vs-ai/reconnect_ai');
+const reloadAI = require('./controllers/vs-ai/reload_ai');
+
+// --- Server setup ---
 const PORT = process.env.PORT || 5000;
 const URI = process.env.URI;
 
@@ -40,69 +54,67 @@ const io = new Server(server, {
   },
 });
 
-//  Connect database
+// --- Connect database ---
 mongoose
   .connect(URI)
-  .then(() => console.log('Connected to database!'))
-  .catch((error) => console.log(error));
+  .then(() => console.log('✅ Connected to database!'))
+  .catch((error) => console.log('❌ DB Connection Error:', error));
 
-// API endpoints
+// --- REST API endpoints ---
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 
-//  Socket functions
+// --- Socket.IO handlers ---
 io.on('connection', (socket) => {
-  //  Matchmaking
-  socket.on('search-game', (data) => {
-    searchGame(socket, io, data);
-  });
+  console.log(`🟢 Client connected: ${socket.id}`);
 
-  // Cancel matchmaking
-  socket.on('cancel-search', () => {
-    cancelSearch(socket);
-  });
+  // Send user count on join
+  io.emit('user-count', io.engine.clientsCount);
 
-  //  Chat messages
-  socket.on('send-message', (data) => {
-    chatMessages(io, data);
-  });
+  // ===============================
+  // 🧍‍♂️ ONLINE VS HUMAN
+  // ===============================
 
-  //  Update square positions in database
-  socket.on('square-btn-click', (data) => {
-    boardPositions(io, data.squares);
-  });
+  // Matchmaking
+  socket.on('search-game', (data) => searchGame(socket, io, data));
+  socket.on('cancel-search', () => cancelSearch(socket));
 
-  //  When game ends
-  socket.on('game-end', (data) => {
-    gameEnd(socket, io, data);
-  });
+  // In-game actions
+  socket.on('square-btn-click', (data) => boardPositions(io, data.squares));
+  socket.on('send-message', (data) => chatMessages(io, data));
 
-  // Create AI vs Player game
-  socket.on('create-ai-game', (data) => {
-    createAIGame(socket, io, data);
-  });
+  // Game end
+  socket.on('game-end', (data) => gameEnd(socket, io, data));
+  socket.on('leave-game-human', (data) => leaveGameHuman(socket, io, data));
+  socket.on('leave-game-ai', (data) => leaveGameAI(socket, io, data));
 
-  // AI move event
-  socket.on('request-ai-move', (data) => {
-    requestAIMove(socket, io, data);
-  });
+  // Midgame leave
+  socket.on('midgame-left-human', (data) => midgameLeftHuman(socket, io, data));
 
-  // When player left the game/disconnected mid game
-  socket.on('midgame-left', (data) => {
-    midgameLeft(socket, io, data);
-  });
+  // Reconnect / Reload
+  socket.on('reconnect-room-human', (data) => reconnectHuman(socket, io, data));
+  socket.on('reload-human', (data) => reloadHuman(socket, io, data));
 
-  //  When client reconnects
-  socket.on('reconnect-room', (roomId) => {
-    reconnectRoom(socket, io, roomId);
-  });
+  // ===============================
+  // 🤖 ONLINE VS AI
+  // ===============================
 
-  // When a socket disconnects
-  socket.on('disconnect', () => {
-    disconnect(socket, io);
-  });
+  // Create AI game and moves
+  socket.on('create-ai-game', (data) => createAIGame(socket, io, data));
+  socket.on('request-ai-move', (data) => requestAIMove(socket, io, data));
+
+  // Midgame leave (AI)
+  socket.on('midgame-left-ai', (data) => midgameLeftAI(socket, io, data));
+
+  // Reconnect / Reload (AI)
+  socket.on('reconnect-room-ai', (data) => reconnectAI(socket, io, data));
+  socket.on('reload-ai', (data) => reloadAI(socket, io, data));
+
+  // Disconnect
+  socket.on('disconnect', () => disconnect(socket, io));
 });
 
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// --- Start server ---
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
 module.exports = { app, io };

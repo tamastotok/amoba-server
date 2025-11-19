@@ -18,29 +18,42 @@ module.exports = async function createAIGame(socket, io, data) {
     const redName = playerMark === 'O' ? playerName : 'AI';
 
     // Create board in db
-    await Boards.create({
+    const board = new Boards({
       roomId,
-      bluePlayer: { name: blueName, mark: 'X' },
-      redPlayer: { name: redName, mark: 'O' },
       boardSize: size,
+      playerData: {
+        bluePlayer: { name: blueName, mark: 'X' },
+        redPlayer: { name: redName, mark: 'O' },
+      },
       difficulty,
       positions: [],
-      whoIsNext: starterMark,
+      nextMark: starterMark,
     });
+
+    try {
+      await board.save();
+    } catch (error) {
+      console.error('Failed to create new board:', error);
+    }
 
     // Join room
     socket.join(roomId);
 
-    // Send data to client
-    io.to(socket.id).emit('ai-game-created', {
+    const payload = {
       roomId,
       boardSize: size,
       starterMark,
+      playerMark,
       playerData: {
-        blueName,
-        redName,
+        bluePlayer: { name: blueName },
+        redPlayer: { name: redName },
       },
-    });
+      positions: [],
+      isReconnect: false,
+    };
+
+    // Send data to client
+    io.to(socket.id).emit('ai-game-created', payload);
 
     console.log(
       `AI game [${difficulty}] created (roomId: ${roomId}) | Player=${playerMark}(${playerName}), AI=${aiMark}, Starter=${starterMark}`

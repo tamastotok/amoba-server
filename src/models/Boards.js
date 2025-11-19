@@ -17,24 +17,26 @@ const PositionsSchema = mongoose.Schema({
 
 const BoardSchema = mongoose.Schema({
   roomId: String,
-  bluePlayer: {
-    name: String,
-    mark: {
-      type: String,
-      default: 'X',
+  boardSize: Number,
+  playerData: {
+    bluePlayer: {
+      name: String,
+      mark: {
+        type: String,
+        default: 'X',
+      },
     },
-  },
-  redPlayer: {
-    name: String,
-    mark: {
-      type: String,
-      default: 'O',
+    redPlayer: {
+      name: String,
+      mark: {
+        type: String,
+        default: 'O',
+      },
     },
   },
   chat: [ChatSchema],
-  boardSize: Number,
   positions: [PositionsSchema],
-  whoIsNext: String,
+  nextMark: String,
   lastStarter: {
     type: String,
     default: 'X',

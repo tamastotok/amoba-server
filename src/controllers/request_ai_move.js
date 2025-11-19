@@ -86,7 +86,7 @@ module.exports = async function requestAIMove(socket, io, data) {
       { roomId },
       {
         $push: { positions: { row: move.row, col: move.col, value: aiMark } },
-        $set: { whoIsNext: humanMark },
+        $set: { nextMark: humanMark },
       }
     );
 

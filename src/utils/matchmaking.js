@@ -1,23 +1,26 @@
 const Boards = require('../models/Boards');
 const { v4: uuidv4 } = require('uuid');
 
-// ──────────────── Waiting players ────────────────
+// Waiting players
 const waitingPlayers = []; // every searching socket goes here (array, not Map)
 
-// ──────────────── Helper: Board creation ────────────────
+// --- Helper: Board creation ---
 async function makeNewBoard({
   roomId,
+  boardSize,
+  nextMark,
   blueName,
   redName,
-  boardSize,
-  whoIsNext,
 }) {
   const board = new Boards({
     roomId,
-    bluePlayer: { name: blueName },
-    redPlayer: { name: redName },
     boardSize,
-    whoIsNext,
+    playerData: {
+      bluePlayer: { name: blueName, mark: 'X' },
+      redPlayer: { name: redName, mark: 'O' },
+    },
+    positions: [],
+    nextMark,
   });
 
   try {
@@ -27,7 +30,7 @@ async function makeNewBoard({
   }
 }
 
-// ──────────────── Player add/remove ────────────────
+// Player add/remove
 function addToWaiting(socket) {
   // Prevent socket for duplicate searching
   if (waitingPlayers.find((s) => s.id === socket.id)) return;
@@ -47,7 +50,7 @@ function removeFromWaiting(socket) {
   console.log(`${socket.data?.playerName || 'Player'} canceled search`);
 }
 
-// ──────────────── Matchmaking ────────────────
+// Matchmaking
 function tryMatch() {
   if (waitingPlayers.length < 2) return;
 
@@ -84,12 +87,12 @@ function tryMatch() {
   }
 }
 
-// ──────────────── Room creation and notify clients ────────────────
+// Room creation and notify clients
 function createRoom(playerA, playerB) {
   const roomId = uuidv4();
   const { gridSize } = playerA.data;
 
-  let blueName, redName, whoIsNext;
+  let blueName, redName, nextMark;
 
   // Player mark mapping (X -> blue, O -> red)
   if (playerA.data.playerMark === 'X') {
@@ -101,21 +104,26 @@ function createRoom(playerA, playerB) {
   }
 
   // Determine who starts based on agreed starterMark
-  whoIsNext = playerA.data.starterMark; // can be 'X' or 'O'
+  nextMark = playerA.data.starterMark; // can be 'X' or 'O'
 
   // Join both players to the room
   playerA.join(roomId);
   playerB.join(roomId);
 
   // Save to DB
-  makeNewBoard({ roomId, blueName, redName, boardSize: gridSize, whoIsNext });
+  makeNewBoard({ roomId, blueName, redName, boardSize: gridSize, nextMark });
 
   // Build payload to send back to clients
   const payload = {
     roomId,
     boardSize: gridSize,
-    starterMark: whoIsNext,
-    playerData: { blueName, redName },
+    starterMark: nextMark,
+    playerData: {
+      bluePlayer: { name: blueName },
+      redPlayer: { name: redName },
+    },
+    positions: [],
+    isReconnect: false,
   };
 
   // Notify both players
@@ -123,11 +131,9 @@ function createRoom(playerA, playerB) {
   playerB.emit('game-found', payload);
 
   console.log(
-    `Match created: ${blueName} (X) vs ${redName} (O) | ${gridSize}x${gridSize} | starts: ${whoIsNext}`
+    `Match created: ${blueName} (X) vs ${redName} (O) | ${gridSize}x${gridSize} | starts: ${nextMark}`
   );
 }
-
-// ──────────────── Exports ────────────────
 module.exports = {
   addToWaiting,
   removeFromWaiting,

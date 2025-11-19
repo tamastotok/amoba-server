@@ -13,7 +13,7 @@ module.exports = async function boardPositions(io, data) {
       query,
       {
         $push: { positions: position },
-        $set: { whoIsNext: data.value === 'X' ? 'O' : 'X' },
+        $set: { nextMark: data.value === 'X' ? 'O' : 'X' },
       },
       { new: true }
     );

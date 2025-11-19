@@ -1,0 +1,38 @@
+const Boards = require('../../models/Boards');
+
+module.exports = async function reloadAI(socket, io, data) {
+  const { roomId } = data || {};
+  if (!roomId) {
+    socket.emit('reconnect-failed', { message: 'Missing roomId.' });
+    return;
+  }
+
+  try {
+    console.log(`[AI RELOAD] F5 reload for ${roomId}`);
+
+    // Find board in db
+    const boardData = await Boards.findOne({ roomId });
+    if (!boardData) {
+      socket.emit('reconnect-failed', { message: 'Board not found.' });
+      return;
+    }
+
+    socket.join(roomId);
+
+    const payload = {
+      roomId,
+      boardSize: boardData.boardSize,
+      playerData: boardData.playerData,
+      positions: boardData.positions,
+      nextMark: boardData.nextMark,
+      isReconnect: true,
+    };
+
+    console.log(payload);
+    socket.emit('reconnect-success', payload);
+    console.log(`[AI RELOAD] Restored session for ${roomId}`);
+  } catch (err) {
+    console.error('Error in reloadAI:', err);
+    socket.emit('reconnect-failed', { message: 'Internal server error.' });
+  }
+};

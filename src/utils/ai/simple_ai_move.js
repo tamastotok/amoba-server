@@ -1,5 +1,6 @@
 const { DIRECTIONS_4 } = require('../directions');
 
+// Random move
 function getRandomMove(board, size) {
   const empty = [];
   for (let r = 0; r < size; r++) {
@@ -7,49 +8,35 @@ function getRandomMove(board, size) {
       if (board[r][c] === '') empty.push({ row: r, col: c });
     }
   }
-
-  // If the board is full
   if (empty.length === 0) return null;
   return empty[Math.floor(Math.random() * empty.length)];
 }
 
 // WinLogic
-function hasFive(board, size, r, c, mark) {
+function hasFive(board, row, col, mark) {
+  const size = board.length;
+
+  const countMatches = (dr, dc) => {
+    let count = 0;
+    let r = row + dr;
+    let c = col + dc;
+
+    while (r >= 0 && r < size && c >= 0 && c < size && board[r][c] === mark) {
+      count++;
+      r += dr;
+      c += dc;
+    }
+
+    return count;
+  };
+
   for (const [dr, dc] of DIRECTIONS_4) {
     let count = 1;
-
-    // Forward
-    let rr = r + dr,
-      cc = c + dc;
-    while (
-      rr >= 0 &&
-      rr < size &&
-      cc >= 0 &&
-      cc < size &&
-      board[rr][cc] === mark
-    ) {
-      count++;
-      rr += dr;
-      cc += dc;
-    }
-
-    // Backward
-    rr = r - dr;
-    cc = c - dc;
-    while (
-      rr >= 0 &&
-      rr < size &&
-      cc >= 0 &&
-      cc < size &&
-      board[rr][cc] === mark
-    ) {
-      count++;
-      rr -= dr;
-      cc -= dc;
-    }
-
+    count += countMatches(dr, dc);
+    count += countMatches(-dr, -dc);
     if (count >= 5) return true;
   }
+
   return false;
 }
 
