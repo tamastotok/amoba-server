@@ -1,6 +1,6 @@
 const { StrategyModel } = require('../../models/ai/Strategy');
 const { Strategy, createInitialPopulation } = require('../ai/genetic_ai_move');
-const { io } = require('../../index');
+const { io } = require('../../app');
 
 // Fitness rating
 function updateFitness(population, result, strategyId) {
