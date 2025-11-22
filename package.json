@@ -1,12 +1,12 @@
 {
   "name": "amoba-server",
   "version": "1.0.0",
-  "description": "Tic-tac-toe server",
-  "main": "index.js",
+  "description": "Gomoku server",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
   },
   "author": "",
   "license": "ISC",
