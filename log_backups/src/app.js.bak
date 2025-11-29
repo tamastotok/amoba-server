@@ -4,7 +4,6 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
-const log = require('./utils/logger');
 
 // --- Routes ---
 const aiRoutes = require('./routes/ai');
@@ -58,8 +57,8 @@ const io = new Server(server, {
 // --- Connect database ---
 mongoose
   .connect(URI)
-  .then(() => log.info('[DATABASE] Connected to database!'))
-  .catch((error) => log.info('[DATABASE] DB Connection Error:', error));
+  .then(() => console.log('[DATABASE] Connected to database!'))
+  .catch((error) => console.log('[DATABASE] DB Connection Error:', error));
 
 // --- REST API endpoints ---
 app.use('/api/ai', aiRoutes);
@@ -67,7 +66,7 @@ app.use('/api/bugreport', bugReportRoutes);
 
 // --- Socket.IO handlers ---
 io.on('connection', (socket) => {
-  log.info(`[SOCKET] Client connected: ${socket.id}`);
+  console.log(`[SOCKET] Client connected: ${socket.id}`);
 
   // Send user count on join
   io.emit('user-count', io.engine.clientsCount);
@@ -116,6 +115,8 @@ io.on('connection', (socket) => {
 });
 
 // --- Start server ---
-server.listen(PORT, () => log.info(`[SERVER] Server running on port ${PORT}`));
+server.listen(PORT, () =>
+  console.log(`[SERVER] Server running on port ${PORT}`)
+);
 
 module.exports = { app, io };

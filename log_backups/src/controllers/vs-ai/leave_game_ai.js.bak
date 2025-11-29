@@ -1,12 +1,11 @@
 const Boards = require('../../models/Boards');
 const { PENDING_ROOMS } = require('../../utils/room_state');
-const log = require('../../utils/logger');
 
 module.exports = async function leaveGameAI(socket, io, data) {
   try {
     let { roomId } = data || {};
 
-    log.info(`[AI] Player left game manually — room ${roomId || 'unknown'}`);
+    console.log(`[AI] Player left game manually — room ${roomId || 'unknown'}`);
 
     // If no roomId was provided, try to infer it from socket.rooms
     if (!roomId) {
@@ -17,7 +16,7 @@ module.exports = async function leaveGameAI(socket, io, data) {
     }
 
     if (!roomId) {
-      log.warn('[AI] leave-game-ai: No roomId found.');
+      console.warn('[AI] leave-game-ai: No roomId found.');
       return;
     }
 
@@ -32,8 +31,8 @@ module.exports = async function leaveGameAI(socket, io, data) {
 
     // Delete board
     await Boards.deleteOne({ roomId });
-    log.info(`[AI] Board deleted for room ${roomId}`);
+    console.log(`[AI] Board deleted for room ${roomId}`);
   } catch (err) {
-    log.error('Error in leaveGameAI:', err);
+    console.error('Error in leaveGameAI:', err);
   }
 };

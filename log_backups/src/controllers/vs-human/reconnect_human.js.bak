@@ -1,8 +1,7 @@
 const Boards = require('../../models/Boards');
 const { PENDING_ROOMS } = require('../../utils/room_state');
-const log = require('../../utils/logger');
 
-module.exports = async function reconnectAI(socket, io, data) {
+module.exports = async function reconnectHuman(socket, io, data) {
   const { roomId } = data || {};
   if (!roomId) {
     socket.emit('reconnect-failed', { message: 'Missing roomId.' });
@@ -10,6 +9,23 @@ module.exports = async function reconnectAI(socket, io, data) {
   }
 
   try {
+    console.log(`[HUMAN RECONNECT] Attempt for room ${roomId}`);
+
+    // Check if opponent is still waiting (one active socket)
+    const room = io.sockets.adapter.rooms.get(roomId);
+    const activeCount = room ? room.size : 0;
+    if (activeCount === 0) {
+      await Boards.deleteOne({ roomId });
+      socket.emit('reconnect-failed', {
+        message: 'Opponent left. Game ended.',
+      });
+      return;
+    }
+    if (activeCount !== 1) {
+      socket.emit('reconnect-failed', { message: 'Opponent not waiting.' });
+      return;
+    }
+
     // Find board in db
     const boardData = await Boards.findOne({ roomId });
     if (!boardData) {
@@ -39,8 +55,13 @@ module.exports = async function reconnectAI(socket, io, data) {
     };
 
     socket.emit('reconnect-success', payload);
+    socket.to(roomId).emit('opponent-reconnected', {
+      message: 'Your opponent reconnected.',
+    });
+
+    console.log(`[HUMAN RECONNECT] Success for ${roomId}`);
   } catch (err) {
-    log.error('Error in reconnectAI:', err);
+    console.error('Error in reconnectHuman:', err);
     socket.emit('reconnect-failed', { message: 'Internal server error.' });
   }
 };

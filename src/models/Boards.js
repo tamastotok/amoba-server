@@ -34,6 +34,7 @@ const BoardSchema = mongoose.Schema({
       },
     },
   },
+  difficulty: String,
   chat: [ChatSchema],
   positions: [PositionsSchema],
   nextMark: String,

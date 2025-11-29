@@ -1,13 +1,12 @@
 const Boards = require('../../models/Boards');
 const { PENDING_ROOMS } = require('../../utils/room_state');
-const log = require('../../utils/logger');
 
-module.exports = async function midgameLeftAI(socket, io, data) {
+module.exports = async function midgameLeftHuman(socket, io, data) {
   const { roomId } = data || {};
   if (!roomId) return;
 
   try {
-    log.info(`[AI] Player left midgame — room ${roomId}`);
+    console.log(`[Human] Player left midgame — room ${roomId}`);
 
     // Delete pending
     if (PENDING_ROOMS.has(roomId)) {
@@ -18,18 +17,25 @@ module.exports = async function midgameLeftAI(socket, io, data) {
 
     // Send event to the player who left
     socket.emit('you-left', {
-      message: 'You have left the AI match. Do you want to reconnect?',
+      message: 'You have left the game. Do you want to reconnect?',
+      roomId,
+      reconnectWindow: 30,
+    });
+
+    // Notify the opponent
+    socket.to(roomId).emit('opponent-left', {
+      message: 'Your opponent disconnected. Waiting for reconnection...',
       roomId,
       reconnectWindow: 30,
     });
 
     // Reconnect window
     const timeout = setTimeout(async () => {
-      log.info(`[AI] Room ${roomId} expired — deleting board.`);
+      console.log(`[Human] Room ${roomId} expired — deleting board.`);
       await Boards.deleteOne({ roomId });
 
       io.to(roomId).emit('match-expired', {
-        message: 'You did not reconnect in time. Match ended.',
+        message: 'Opponent did not reconnect in time. Match ended.',
       });
 
       PENDING_ROOMS.delete(roomId);
@@ -37,6 +43,6 @@ module.exports = async function midgameLeftAI(socket, io, data) {
 
     PENDING_ROOMS.set(roomId, timeout);
   } catch (error) {
-    log.error('Error in midgameLeftAI:', error);
+    console.error('Error in midgameLeftHuman:', error);
   }
 };

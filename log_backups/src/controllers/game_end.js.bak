@@ -7,14 +7,13 @@ const {
 } = require('../utils/ai/evolution');
 const { endedRooms } = require('../utils/room_state');
 const aiState = require('../utils/ai_state');
-const log = require('../utils/logger');
 
 module.exports = async function gameEnd(socket, io, data) {
   try {
     const { roomId, result } = data; // winner: 'player' | 'ai' | 'draw' (frontend-től)
 
     if (!roomId) {
-      log.warn('No roomId found in gameEnd');
+      console.warn('No roomId found in gameEnd');
       return;
     }
 
@@ -74,12 +73,12 @@ module.exports = async function gameEnd(socket, io, data) {
     endedRooms.add(roomId);
 
     await Boards.deleteOne({ roomId });
-    log.info(`Game ended in room ${roomId}, winner: ${result}`);
+    console.log(`Game ended in room ${roomId}, winner: ${result}`);
 
     socket.leave(roomId);
 
     setTimeout(() => endedRooms.delete(roomId), 5000);
   } catch (err) {
-    log.error('Error in game_end:', err);
+    console.error('Error in game_end:', err);
   }
 };

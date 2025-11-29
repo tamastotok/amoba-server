@@ -1,7 +1,6 @@
 const Boards = require('../models/Boards');
 const midgameLeftHuman = require('./vs-human/midgame_left_human');
 const midgameLeftAI = require('../controllers/vs-ai/midgame_left_ai');
-const log = require('../utils/logger');
 
 module.exports = async function disconnect(socket, io) {
   try {
@@ -15,13 +14,13 @@ module.exports = async function disconnect(socket, io) {
     for (const roomId of rooms) {
       if (roomId === socket.id || roomId === 'lobby') continue;
 
-      log.info(`${socket.id} disconnecting from room ${roomId}`);
+      console.log(`${socket.id} disconnecting from room ${roomId}`);
 
       try {
         const board = await Boards.findOne({ roomId });
 
         if (!board) {
-          log.warn(`No board found for room ${roomId} during disconnect.`);
+          console.warn(`No board found for room ${roomId} during disconnect.`);
           continue;
         }
 
@@ -43,10 +42,10 @@ module.exports = async function disconnect(socket, io) {
           await midgameLeftHuman(socket, io, payload);
         }
       } catch (innerErr) {
-        log.error(`Error handling room ${roomId} on disconnect:`, innerErr);
+        console.error(`Error handling room ${roomId} on disconnect:`, innerErr);
       }
     }
   } catch (err) {
-    log.error('Error in disconnect handler:', err);
+    console.error('Error in disconnect handler:', err);
   }
 };

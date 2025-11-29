@@ -1,5 +1,4 @@
 const Boards = require('../models/Boards');
-const log = require('../utils/logger');
 
 module.exports = async function boardPositions(io, data) {
   const query = { roomId: data.roomId };
@@ -21,6 +20,6 @@ module.exports = async function boardPositions(io, data) {
 
     io.emit(`square-btn-click-${data.roomId}`, updatePositions);
   } catch (error) {
-    log.error(error);
+    console.error(error);
   }
 };

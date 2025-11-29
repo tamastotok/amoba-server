@@ -36,7 +36,7 @@ function createInitialPopulation(size = 10) {
 
 // Simple decision making by weights
 function evaluateMove(board, row, col, strategy) {
-  // Basid heuristic value
+  // Basic heuristic value
   let score = 0;
 
   // Preference playing on the center area of the board

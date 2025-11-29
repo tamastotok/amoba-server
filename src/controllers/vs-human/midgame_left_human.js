@@ -1,12 +1,13 @@
 const Boards = require('../../models/Boards');
-const { PENDING_ROOMS } = require('../../utils/roomState');
+const { PENDING_ROOMS } = require('../../utils/room_state');
+const log = require('../../utils/logger');
 
 module.exports = async function midgameLeftHuman(socket, io, data) {
   const { roomId } = data || {};
   if (!roomId) return;
 
   try {
-    console.log(`🟡 [Human] Player left midgame — room ${roomId}`);
+    log.info(`[Human] Player left midgame — room ${roomId}`);
 
     // Delete pending
     if (PENDING_ROOMS.has(roomId)) {
@@ -31,7 +32,7 @@ module.exports = async function midgameLeftHuman(socket, io, data) {
 
     // Reconnect window
     const timeout = setTimeout(async () => {
-      console.log(`⚫ [Human] Room ${roomId} expired — deleting board.`);
+      log.info(`[Human] Room ${roomId} expired — deleting board.`);
       await Boards.deleteOne({ roomId });
 
       io.to(roomId).emit('match-expired', {
@@ -43,6 +44,6 @@ module.exports = async function midgameLeftHuman(socket, io, data) {
 
     PENDING_ROOMS.set(roomId, timeout);
   } catch (error) {
-    console.error('Error in midgameLeftHuman:', error);
+    log.error('Error in midgameLeftHuman:', error);
   }
 };

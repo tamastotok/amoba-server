@@ -1,4 +1,5 @@
 const Boards = require('../../models/Boards');
+const log = require('../../utils/logger');
 
 module.exports = async function reloadHuman(socket, io, data) {
   const { roomId } = data || {};
@@ -8,7 +9,7 @@ module.exports = async function reloadHuman(socket, io, data) {
   }
 
   try {
-    console.log(`[HUMAN RELOAD] F5 reload for ${roomId}`);
+    log.info(`[HUMAN RELOAD] F5 reload for ${roomId}`);
 
     // Check if room and opponent exist
     const room = io.sockets.adapter.rooms.get(roomId);
@@ -41,9 +42,9 @@ module.exports = async function reloadHuman(socket, io, data) {
     };
 
     socket.emit('reconnect-success', payload);
-    console.log(`[HUMAN RELOAD] Restored session for ${roomId}`);
+    log.info(`[HUMAN RELOAD] Restored session for ${roomId}`);
   } catch (err) {
-    console.error('Error in reloadHuman:', err);
+    log.error('Error in reloadHuman:', err);
     socket.emit('reconnect-failed', { message: 'Internal server error.' });
   }
 };

@@ -1,6 +1,5 @@
 const Boards = require('../models/Boards');
 const { v4: uuidv4 } = require('uuid');
-const log = require('../utils/logger');
 
 // Waiting players
 const waitingPlayers = []; // every searching socket goes here (array, not Map)
@@ -27,7 +26,7 @@ async function makeNewBoard({
   try {
     await board.save();
   } catch (error) {
-    log.error('Failed to create new board:', error);
+    console.error('Failed to create new board:', error);
   }
 }
 
@@ -48,7 +47,7 @@ function removeFromWaiting(socket) {
   if (idx !== -1) waitingPlayers.splice(idx, 1);
 
   socket.emit('search-canceled');
-  log.info(`${socket.data?.playerName || 'Player'} canceled search`);
+  console.log(`${socket.data?.playerName || 'Player'} canceled search`);
 }
 
 // Matchmaking
@@ -67,13 +66,13 @@ function tryMatch() {
       const oppositeMarks = p1.data.playerMark !== p2.data.playerMark;
       const sameStarter = p1.data.starterMark === p2.data.starterMark;
 
-      log.info(
+      console.log(
         'Checking:',
         `${p1.data.playerName} (${p1.data.playerMark}, starts ${p1.data.starterMark}) vs ${p2.data.playerName} (${p2.data.playerMark}, starts ${p2.data.starterMark})`
       );
 
       if (sameBoard && oppositeMarks && sameStarter) {
-        log.info(
+        console.log(
           'Match created between',
           p1.data.playerName,
           'and',
@@ -131,7 +130,7 @@ function createRoom(playerA, playerB) {
   playerA.emit('game-found', payload);
   playerB.emit('game-found', payload);
 
-  log.info(
+  console.log(
     `Match created: ${blueName} (X) vs ${redName} (O) | ${gridSize}x${gridSize} | starts: ${nextMark}`
   );
 }

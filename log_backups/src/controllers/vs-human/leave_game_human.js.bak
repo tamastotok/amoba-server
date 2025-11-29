@@ -1,12 +1,11 @@
 const Boards = require('../../models/Boards');
 const { PENDING_ROOMS } = require('../../utils/room_state');
-const log = require('../../utils/logger');
 
 module.exports = async function leaveGameHuman(socket, io, data) {
   let { roomId } = data || {};
 
   try {
-    log.info(
+    console.log(
       `Player left game manually (leave-game) — room ${roomId || 'unknown'}`
     );
 
@@ -21,7 +20,7 @@ module.exports = async function leaveGameHuman(socket, io, data) {
     }
 
     if (!roomId) {
-      log.warn('No roomId found for leave-game event.');
+      console.warn('No roomId found for leave-game event.');
       return;
     }
 
@@ -36,7 +35,7 @@ module.exports = async function leaveGameHuman(socket, io, data) {
 
     // Delete the match state in db
     await Boards.deleteOne({ roomId });
-    log.info(`Board for room ${roomId} deleted.`);
+    console.log(`Board for room ${roomId} deleted.`);
 
     // Notify the other player
     socket.to(roomId).emit('left-game-perma', {
@@ -44,6 +43,6 @@ module.exports = async function leaveGameHuman(socket, io, data) {
       roomId,
     });
   } catch (error) {
-    log.error('Error in leave-game:', error);
+    console.error('Error in leave-game:', error);
   }
 };

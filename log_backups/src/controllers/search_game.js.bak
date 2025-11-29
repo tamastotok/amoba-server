@@ -1,5 +1,4 @@
 const { addToWaiting } = require('../utils/matchmaking');
-const log = require('../utils/logger');
 
 module.exports = function searchGame(socket, io, data) {
   try {
@@ -17,11 +16,11 @@ module.exports = function searchGame(socket, io, data) {
     // Start matchmaking
     addToWaiting(socket);
 
-    log.info(
+    console.log(
       `${socket.data.playerName} searching for ${socket.data.gridSize}x${socket.data.gridSize} (${socket.data.playerMark}, starts: ${socket.data.starterMark})`
     );
   } catch (err) {
-    log.error('Error in search_game controller:', err);
+    console.error('Error in search_game controller:', err);
     socket.emit('search-error', { message: 'Internal server error' });
   }
 };

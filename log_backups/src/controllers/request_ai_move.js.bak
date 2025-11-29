@@ -4,20 +4,19 @@ const { heuristicAIMove } = require('../utils/ai/heuristic_ai_move');
 const { geneticAIMove } = require('../utils/ai/genetic_ai_move');
 const { loadLatestPopulation } = require('../utils/ai/evolution');
 const aiState = require('../utils/ai_state');
-const log = require('../utils/logger');
 
 module.exports = async function requestAIMove(socket, io, data) {
   try {
     const { roomId, playerMark } = data;
     if (!roomId) {
-      log.warn('requestAIMove called without roomId');
+      console.warn('requestAIMove called without roomId');
       return;
     }
 
     // Get current game state from database
     const boardDoc = await Boards.findOne({ roomId }).lean();
     if (!boardDoc) {
-      log.warn(`No board found for room ${roomId}`);
+      console.warn(`No board found for room ${roomId}`);
       return;
     }
 
@@ -74,7 +73,7 @@ module.exports = async function requestAIMove(socket, io, data) {
 
     // Validate move
     if (!move) {
-      log.info(`AI (${aiMark}) could not find a move for room ${roomId}`);
+      console.log(`AI (${aiMark}) could not find a move for room ${roomId}`);
       return;
     }
 
@@ -93,11 +92,11 @@ module.exports = async function requestAIMove(socket, io, data) {
     const delay = Math.floor(800 + Math.random() * 500);
     setTimeout(() => {
       io.to(roomId).emit('ai-move', move);
-      log.info(
+      console.log(
         `[${difficulty}] AI (${aiMark}) moved in room ${roomId}: [${move.row}, ${move.col}]`
       );
     }, delay);
   } catch (err) {
-    log.error('AI move error:', err);
+    console.error('AI move error:', err);
   }
 };

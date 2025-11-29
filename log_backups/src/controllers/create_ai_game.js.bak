@@ -1,7 +1,6 @@
 const Boards = require('../models/Boards');
 const { v4: uuidv4 } = require('uuid');
 const requestAIMove = require('./request_ai_move');
-const log = require('../utils/logger');
 
 module.exports = async function createAIGame(socket, io, data) {
   try {
@@ -34,7 +33,7 @@ module.exports = async function createAIGame(socket, io, data) {
     try {
       await board.save();
     } catch (error) {
-      log.error('Failed to create new board:', error);
+      console.error('Failed to create new board:', error);
     }
 
     // Join room
@@ -56,8 +55,8 @@ module.exports = async function createAIGame(socket, io, data) {
     // Send data to client
     io.to(socket.id).emit('ai-game-created', payload);
 
-    log.ai(
-      `Game [${difficulty}] created (roomId: ${roomId}) | Player=${playerMark}(${playerName}), AI=${aiMark}, Starter=${starterMark}`
+    console.log(
+      `AI game [${difficulty}] created (roomId: ${roomId}) | Player=${playerMark}(${playerName}), AI=${aiMark}, Starter=${starterMark}`
     );
 
     // If AI starts, AI move sends to client immediately
@@ -66,7 +65,7 @@ module.exports = async function createAIGame(socket, io, data) {
       // playerMark = controller calculate AI's mark from this
     }
   } catch (error) {
-    log.error('Error creating AI game:', error);
+    console.error('Error creating AI game:', error);
     socket.emit('error', { message: 'Failed to create AI game' });
   }
 };

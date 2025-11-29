@@ -1,5 +1,5 @@
 const Boards = require('../../models/Boards');
-const { PENDING_ROOMS } = require('../../utils/roomState');
+const { PENDING_ROOMS } = require('../../utils/room_state');
 
 module.exports = async function reconnectHuman(socket, io, data) {
   const { roomId } = data || {};
@@ -9,7 +9,7 @@ module.exports = async function reconnectHuman(socket, io, data) {
   }
 
   try {
-    console.log(`[HUMAN RECONNECT] Attempt for room ${roomId}`);
+    log.info(`[HUMAN RECONNECT] Attempt for room ${roomId}`);
 
     // Check if opponent is still waiting (one active socket)
     const room = io.sockets.adapter.rooms.get(roomId);
@@ -59,9 +59,9 @@ module.exports = async function reconnectHuman(socket, io, data) {
       message: 'Your opponent reconnected.',
     });
 
-    console.log(`[HUMAN RECONNECT] Success for ${roomId}`);
+    log.info(`[HUMAN RECONNECT] Success for ${roomId}`);
   } catch (err) {
-    console.error('Error in reconnectHuman:', err);
+    log.error('Error in reconnectHuman:', err);
     socket.emit('reconnect-failed', { message: 'Internal server error.' });
   }
 };

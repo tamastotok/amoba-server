@@ -1,6 +1,5 @@
 const { StrategyModel } = require('../../models/ai/Strategy');
 const { Strategy, createInitialPopulation } = require('../ai/genetic_ai_move');
-const log = require('../logger');
 
 // Fitness rating
 function updateFitness(population, result, strategyId) {
@@ -64,7 +63,7 @@ function evolvePopulation(population, generationSize = 10) {
 // Save in db + notify dashboard
 async function savePopulationToDB(population, generation) {
   await StrategyModel.create({ population, generation });
-  log.info(
+  console.log(
     `Generation ${generation} saved to DB (${population.length} strategies)`
   );
 }
@@ -73,7 +72,7 @@ async function savePopulationToDB(population, generation) {
 async function loadLatestPopulation() {
   const latest = await StrategyModel.findOne().sort({ generation: -1 }).lean();
   if (!latest) {
-    log.warn('No existing population found. Creating initial...');
+    console.warn('No existing population found. Creating initial...');
     const population = createInitialPopulation(10);
     await savePopulationToDB(population, 1);
     return { generation: 1, population };
