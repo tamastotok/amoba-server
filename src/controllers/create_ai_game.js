@@ -67,6 +67,5 @@ module.exports = async function createAIGame(socket, io, data) {
     }
   } catch (error) {
     log.error('Error creating AI game:', error);
-    socket.emit('error', { message: 'Failed to create AI game' });
   }
 };
