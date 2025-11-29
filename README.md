@@ -145,8 +145,6 @@ The backend periodically evolves the AI and pushes updates to all connected dash
 
 ## Repositories
 
-Backend Repo
-(link)
-
-Frontend Repo
-(link)
+- [Frontend Repository](https://github.com/tamastotok/amoba)
+- [Backend Repository](https://github.com/tamastotok/amoba-server)
+- [Live Demo](https://amoba-68115.web.app/)
