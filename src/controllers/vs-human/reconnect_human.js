@@ -1,5 +1,6 @@
 const Boards = require('../../models/Boards');
 const { PENDING_ROOMS } = require('../../utils/room_state');
+const log = require('../../utils/logger');
 
 module.exports = async function reconnectHuman(socket, io, data) {
   const { roomId } = data || {};
