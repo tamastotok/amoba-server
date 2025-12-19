@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const { StrategyModel } = require('../models/ai/Strategy');
+const log = require('./logger');
 require('dotenv').config();
 
 const POPULATION_SIZE = 64;
 
+// Helper functions
 function clamp(x, min, max) {
   return Math.max(min, Math.min(max, x));
 }
@@ -16,6 +18,7 @@ function randn() {
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
+// Generator for a specific generation
 function createGenerationData(genConfig) {
   const { generation, fitnessBase, fitnessVar, weightBias } = genConfig;
   const population = [];
@@ -24,20 +27,23 @@ function createGenerationData(genConfig) {
     const genWeight = (target) => clamp(target + randn() * 0.05, 0, 1);
 
     const weights = {
+      // Basics
       center: genWeight(weightBias.center),
       randomness: genWeight(weightBias.randomness),
 
+      // Attack (Own lines)
       myLine2: genWeight(weightBias.myLine2),
       myLine3: genWeight(weightBias.myLine3),
       myLine4: genWeight(weightBias.myLine4),
 
+      // Defense (Blocking)
       blockLine2: genWeight(weightBias.blockLine2),
       blockLine3: genWeight(weightBias.blockLine3),
       blockLine4: genWeight(weightBias.blockLine4),
     };
 
+    // Generate fitness (to show progress on the chart)
     const fitness = Math.round(fitnessBase + randn() * fitnessVar);
-
     population.push({
       id,
       weights,
@@ -48,6 +54,7 @@ function createGenerationData(genConfig) {
     });
   }
 
+  // Aggregated statistics for the generation
   const totalWins = population.reduce((acc, p) => acc + p.wins, 0);
   const totalLosses = population.reduce((acc, p) => acc + p.losses, 0);
 
@@ -64,7 +71,7 @@ function createGenerationData(genConfig) {
   };
 }
 
-// Set evolutions
+// Configure The Glorious Evolution
 const generationsToSeed = [
   {
     generation: 1,
@@ -102,40 +109,44 @@ const generationsToSeed = [
     fitnessVar: 10,
     weightBias: {
       center: 0.3,
-      randomness: 0.01,
+      randomness: 0.02,
       myLine2: 0.3,
       myLine3: 0.8,
-      myLine4: 1.5,
+      myLine4: 1.0,
       blockLine2: 0.3,
       blockLine3: 0.8,
-      blockLine4: 1.5,
+      blockLine4: 1.0,
     },
   },
 ];
 
 async function main() {
-  const mongoUri = process.env.URI;
-  if (!mongoUri) throw new Error('Missing MONGO_URI env var');
+  const URI = process.env.URI;
+  if (!URI) throw new Error('Missing DB URL');
 
-  await mongoose.connect(mongoUri);
-  console.log('Connected to DB.');
+  await mongoose.connect(URI);
+  log.info('[DATABASE] Connected to database!');
 
+  // Clear old data for a clean slate
   await StrategyModel.deleteMany({});
-  console.log('Cleared old strategies.');
+  log.info('[DATABASE] Cleared old strategies.');
 
+  // Generate the 3 generations
   for (const config of generationsToSeed) {
     const doc = createGenerationData(config);
     await StrategyModel.create(doc);
-    console.log(
-      `Seeded Generation ${config.generation} (Avg Fitness: ${config.fitnessBase})`
+    log.info(
+      `[DATABASE] Seeded Generation ${config.generation} (Avg Fitness: ${config.fitnessBase})`
     );
   }
 
-  console.log('Done! Database seeded with 3 evolutionary steps.');
+  log.info(
+    '[DATABASE] Database successfully seeded with 3 evolutionary steps.'
+  );
   await mongoose.disconnect();
 }
 
 main().catch((err) => {
-  console.error(err);
+  log.error(err);
   process.exit(1);
 });
