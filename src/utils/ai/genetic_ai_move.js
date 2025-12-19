@@ -1,3 +1,4 @@
+const { POPULATION_SIZE } = require('../ai_state');
 const { DIRECTIONS_8 } = require('../directions');
 
 class Strategy {
@@ -24,7 +25,7 @@ class Strategy {
 }
 
 // Create population
-function createInitialPopulation(size = 10) {
+function createInitialPopulation(size = POPULATION_SIZE) {
   const population = [];
   for (let i = 0; i < size; i++) {
     const s = new Strategy(i + 1);
@@ -35,21 +36,32 @@ function createInitialPopulation(size = 10) {
 }
 
 // Simple decision making by weights
-function evaluateMove(board, row, col, strategy) {
+function evaluateMove(board, row, col, strategy, aiMark, humanMark) {
   // Basic heuristic value
   let score = 0;
 
   // Preference playing on the center area of the board
   const center = Math.floor(board.length / 2);
   const distFromCenter = Math.abs(row - center) + Math.abs(col - center);
-  score += strategy.weights.center * (1 / (distFromCenter + 1));
+  score += strategy.weights.center * (0.25 / (distFromCenter + 1));
 
-  // Defense: if the enemy is next to the ai
+  // Attack vs Defense - checking fields nearby
   for (const [dx, dy] of DIRECTIONS_8) {
     const nr = row + dx,
       nc = col + dy;
-    if (board[nr] && board[nr][nc] && board[nr][nc] !== '') {
-      score += strategy.weights.defense * 0.5;
+
+    // Check if the neighbor filed is inside of the board
+    if (board[nr] && board[nr][nc] !== undefined) {
+      const neighborCell = board[nr][nc];
+
+      // If neighbor has ai mark
+      if (neighborCell === aiMark) {
+        // Increase attack weight
+        score += strategy.weights.attack * 1.5;
+      } else if (neighborCell === humanMark) {
+        // Increase defense weight
+        score += strategy.weights.defense * 1.5;
+      }
     }
   }
 

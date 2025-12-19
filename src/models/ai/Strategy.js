@@ -14,6 +14,12 @@ const StrategySchema = new mongoose.Schema({
       fitness: Number,
     },
   ],
+  stats: {
+    wins: { type: Number, default: 0 },
+    losses: { type: Number, default: 0 },
+    draws: { type: Number, default: 0 },
+    games: { type: Number, default: 0 },
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
