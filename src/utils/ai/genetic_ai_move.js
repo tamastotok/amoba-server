@@ -1,5 +1,5 @@
 const { POPULATION_SIZE } = require('../ai_state');
-const { DIRECTIONS_8 } = require('../directions');
+const { DIRECTIONS_4 } = require('../directions');
 
 class Strategy {
   constructor(id, weights = null) {
@@ -7,10 +7,19 @@ class Strategy {
 
     // Add weights to ai behavior
     this.weights = weights || {
-      attack: Math.random(), // attack
-      defense: Math.random(), // defense
-      center: Math.random(), // move to center
-      randomness: Math.random(), // add randomness
+      // Basic weights
+      center: Math.random(),
+      randomness: 0.05,
+
+      // Attack weights
+      myLine2: Math.random(),
+      myLine3: Math.random(),
+      myLine4: Math.random(),
+
+      // Defense weights
+      blockLine2: Math.random(),
+      blockLine3: Math.random(),
+      blockLine4: Math.random(),
     };
     this.fitness = 0; // improve by learning
   }
@@ -18,6 +27,7 @@ class Strategy {
   // Normalize weights
   normalize() {
     const sum = Object.values(this.weights).reduce((a, b) => a + b, 0);
+    if (sum === 0) return;
     for (let key in this.weights) {
       this.weights[key] /= sum;
     }
@@ -39,36 +49,81 @@ function createInitialPopulation(size = POPULATION_SIZE) {
 function evaluateMove(board, row, col, strategy, aiMark, humanMark) {
   // Basic heuristic value
   let score = 0;
+  const size = board.length;
 
   // Preference playing on the center area of the board
   const center = Math.floor(board.length / 2);
   const distFromCenter = Math.abs(row - center) + Math.abs(col - center);
-  score += strategy.weights.center * (0.25 / (distFromCenter + 1));
+  score += strategy.weights.center * (1.0 / (distFromCenter + 1));
 
-  // Attack vs Defense - checking fields nearby
-  for (const [dx, dy] of DIRECTIONS_8) {
-    const nr = row + dx,
-      nc = col + dy;
+  // Patterns
+  // Attack
+  const attackPotential = getMaxLineLength(board, row, col, aiMark, size);
 
-    // Check if the neighbor filed is inside of the board
-    if (board[nr] && board[nr][nc] !== undefined) {
-      const neighborCell = board[nr][nc];
+  if (attackPotential >= 5) score += 1000; // Azonnali nyerés
+  else if (attackPotential === 4) score += strategy.weights.myLine4 * 10;
+  else if (attackPotential === 3) score += strategy.weights.myLine3 * 5;
+  else if (attackPotential === 2) score += strategy.weights.myLine2;
 
-      // If neighbor has ai mark
-      if (neighborCell === aiMark) {
-        // Increase attack weight
-        score += strategy.weights.attack * 1.5;
-      } else if (neighborCell === humanMark) {
-        // Increase defense weight
-        score += strategy.weights.defense * 1.5;
-      }
-    }
-  }
+  // Defense
+  const defensePotential = getMaxLineLength(board, row, col, humanMark, size);
 
-  // Add randomness
-  score += strategy.weights.randomness * Math.random() * 0.1;
+  if (defensePotential >= 5) score += 500; // Azonnali halál elkerülése
+  else if (defensePotential === 4) score += strategy.weights.blockLine4 * 10;
+  else if (defensePotential === 3) score += strategy.weights.blockLine3 * 5;
+  else if (defensePotential === 2) score += strategy.weights.blockLine2;
+
+  // Random
+  score += strategy.weights.randomness * Math.random();
 
   return score;
+}
+
+function getMaxLineLength(board, r, c, mark, size) {
+  let maxLength = 1;
+
+  for (const [dr, dc] of DIRECTIONS_4) {
+    let currentLength = 1;
+
+    // Forward
+    let i = 1;
+    while (true) {
+      const nr = r + dr * i;
+      const nc = c + dc * i;
+      if (
+        nr < 0 ||
+        nr >= size ||
+        nc < 0 ||
+        nc >= size ||
+        board[nr][nc] !== mark
+      )
+        break;
+      currentLength++;
+      i++;
+    }
+
+    // Backward
+    i = 1;
+    while (true) {
+      const nr = r - dr * i;
+      const nc = c - dc * i;
+      if (
+        nr < 0 ||
+        nr >= size ||
+        nc < 0 ||
+        nc >= size ||
+        board[nr][nc] !== mark
+      )
+        break;
+      currentLength++;
+      i++;
+    }
+
+    if (currentLength > maxLength) {
+      maxLength = currentLength;
+    }
+  }
+  return maxLength;
 }
 
 function geneticAIMove(board, boardSize, aiMark, humanMark, strategy) {
@@ -78,7 +133,15 @@ function geneticAIMove(board, boardSize, aiMark, humanMark, strategy) {
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
       if (board[row][col] === '') {
-        const score = evaluateMove(board, row, col, strategy);
+        const score = evaluateMove(
+          board,
+          row,
+          col,
+          strategy,
+          aiMark,
+          humanMark
+        );
+
         if (score > bestScore) {
           bestScore = score;
           bestMove = { row, col, value: aiMark };
