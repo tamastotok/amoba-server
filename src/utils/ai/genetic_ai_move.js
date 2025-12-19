@@ -60,7 +60,7 @@ function evaluateMove(board, row, col, strategy, aiMark, humanMark) {
   // Attack
   const attackPotential = getMaxLineLength(board, row, col, aiMark, size);
 
-  if (attackPotential >= 5) score += 1000; // Azonnali nyerés
+  if (attackPotential >= 5) score += 1000;
   else if (attackPotential === 4) score += strategy.weights.myLine4 * 10;
   else if (attackPotential === 3) score += strategy.weights.myLine3 * 5;
   else if (attackPotential === 2) score += strategy.weights.myLine2;
@@ -68,7 +68,7 @@ function evaluateMove(board, row, col, strategy, aiMark, humanMark) {
   // Defense
   const defensePotential = getMaxLineLength(board, row, col, humanMark, size);
 
-  if (defensePotential >= 5) score += 500; // Azonnali halál elkerülése
+  if (defensePotential >= 5) score += 500;
   else if (defensePotential === 4) score += strategy.weights.blockLine4 * 10;
   else if (defensePotential === 3) score += strategy.weights.blockLine3 * 5;
   else if (defensePotential === 2) score += strategy.weights.blockLine2;
@@ -79,6 +79,7 @@ function evaluateMove(board, row, col, strategy, aiMark, humanMark) {
   return score;
 }
 
+// Calculates the max line length in all 4 directions to detect patterns
 function getMaxLineLength(board, r, c, mark, size) {
   let maxLength = 1;
 
