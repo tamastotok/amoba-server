@@ -79,6 +79,7 @@ function evaluateMove(board, row, col, strategy, aiMark, humanMark) {
   return score;
 }
 
+// Calculates the max line length in all 4 directions to detect patterns
 function getMaxLineLength(board, r, c, mark, size) {
   let maxLength = 1;
 
