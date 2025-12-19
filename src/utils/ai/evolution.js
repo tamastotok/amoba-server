@@ -49,7 +49,7 @@ function crossover(parentA, parentB, newId) {
 }
 
 // Mutation
-function mutate(strategy, rate = 0.2, magnitude = 0.1) {
+function mutate(strategy, rate = 0.05, magnitude = 0.1) {
   for (let key in strategy.weights) {
     if (Math.random() < rate) {
       const delta = (Math.random() * 2 - 1) * magnitude;
